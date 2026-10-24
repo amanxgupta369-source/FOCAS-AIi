@@ -1,0 +1,46 @@
+@tailwind base; @tailwind components; @tailwind utilities;
+body { @apply font-sans text-dusk-ink antialiased min-h-screen;
+  background:
+    radial-gradient(ellipse 800px 500px at 15% -5%, rgba(255,255,255,0.35), transparent 60%),
+    radial-gradient(ellipse 600px 400px at 90% 10%, rgba(169,205,232,0.4), transparent 55%),
+    radial-gradient(ellipse 500px 350px at 40% 95%, rgba(220,234,245,0.3), transparent 50%),
+    linear-gradient(160deg, #DCEAF5 0%, #B5D1E8 25%, #8BAAC8 50%, #6D8EAF 75%, #536F91 100%);
+  background-attachment: fixed; }
+@layer components {
+  .glass { @apply rounded-2xl;
+    background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.22);
+    backdrop-filter: blur(24px) saturate(1.2); -webkit-backdrop-filter: blur(24px) saturate(1.2);
+    box-shadow: 0 8px 32px rgba(38,54,74,0.08), inset 0 1px 0 rgba(255,255,255,0.16); }
+  .glass-solid { @apply rounded-2xl;
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.28);
+    backdrop-filter: blur(28px) saturate(1.2); -webkit-backdrop-filter: blur(28px) saturate(1.2);
+    box-shadow: 0 8px 32px rgba(38,54,74,0.1), inset 0 1px 0 rgba(255,255,255,0.2); }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium disabled:opacity-50 min-h-[44px];
+    transition: all 0.2s cubic-bezier(0.16,1,0.3,1); }
+  .btn-primary { @apply btn text-white; background: #536F91;
+    box-shadow: 0 2px 12px rgba(83,111,145,0.3); }
+  .btn-primary:hover:not(:disabled) { background: #3D5574; transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(83,111,145,0.35); }
+  .btn-primary:active:not(:disabled) { transform: translateY(0); }
+  .btn-ghost { @apply btn text-dusk-ink;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); }
+  .btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,0.24); border-color: rgba(255,255,255,0.32); }
+  .input { @apply w-full rounded-xl px-4 py-3 text-sm; color: #26364A;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+    transition: all 0.2s ease; }
+  .input::placeholder { color: rgba(115,131,152,0.6); }
+  .input:focus { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.38);
+    outline: none; box-shadow: 0 0 0 3px rgba(83,111,145,0.12); }
+  .chip { @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-medium text-dusk-deep;
+    background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.2); }
+}
+*:focus-visible { outline: 2px solid rgba(83,111,145,0.4); outline-offset: 2px; }
+@keyframes rise { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: none } }
+.rise { animation: rise .45s cubic-bezier(0.16,1,0.3,1) both; }
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+.fade-in { animation: fadeIn .25s ease both; }
+@keyframes pulse-gentle { 0%,100% { opacity: 0.3; transform: scale(1) } 50% { opacity: 0.6; transform: scale(1.1) } }
+.analyzing-pulse { animation: pulse-gentle 2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+@media print { aside, nav, .no-print { display: none !important; } body { background: #fff; }
+  .glass, .glass-solid { box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(255,255,255,0.9); } }
