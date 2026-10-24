@@ -129,7 +129,10 @@ YOUR BEHAVIOR (MANDATORY RULES):
     ]
 
     // 5. Call OpenRouter if configured
-    if (process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_API_KEY.trim()) {
+    const hasKey = Boolean((process.env.OPENROUTER_API_KEY || process.env.VITE_OPENROUTER_API_KEY || '').trim())
+    const isCloud = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NODE_ENV === 'production')
+
+    if (hasKey) {
       try {
         const reply = await callOpenRouter({
           messages: chatPayloadMessages,
@@ -152,53 +155,76 @@ YOUR BEHAVIOR (MANDATORY RULES):
           error: openRouterErr.message,
         })
 
-        // Try local Ollama fallback if running
+        // Try local Ollama fallback ONLY if running in local environment (not cloud / Vercel)
+        if (!isCloud) {
+          try {
+            const fallbackReply = await callLocalOllamaChat({
+              messages: chatPayloadMessages,
+              timeoutMs: 15000,
+              requestId,
+            })
+            return sendJson(res, 200, {
+              success: true,
+              requestId,
+              provider: 'ollama-fallback',
+              message: cleanThinkingTags(fallbackReply),
+            })
+          } catch {
+            // Local Ollama offline
+          }
+        }
+
+        const statusCode = openRouterErr.status || 502
+        const isRateLimit = openRouterErr.isQuotaExceeded || openRouterErr.status === 429
+        const isInvalidKey = openRouterErr.status === 401 || openRouterErr.code === 'INVALID_API_KEY'
+        const isTimeout = openRouterErr.name === 'AbortError' || openRouterErr.message?.includes('timed out')
+
+        let userFriendlyMsg = 'The AI service encountered a temporary error. Please try again in a moment.'
+        if (isInvalidKey) {
+          userFriendlyMsg = 'The configured OPENROUTER_API_KEY is invalid or unauthorized. Please verify your OpenRouter key.'
+        } else if (isRateLimit) {
+          userFriendlyMsg = 'The free AI service is temporarily busy due to provider rate limits. Please wait 15–20 seconds and ask again.'
+        } else if (isTimeout) {
+          userFriendlyMsg = 'The AI request timed out after 25s. Please try again in a moment.'
+        }
+
+        return sendJson(res, statusCode >= 400 && statusCode < 600 ? statusCode : 502, {
+          success: false,
+          requestId,
+          isQuotaExceeded: isRateLimit,
+          code: openRouterErr.code || (isRateLimit ? 'RATE_LIMIT_EXCEEDED' : 'AI_ERROR'),
+          error: userFriendlyMsg,
+          message: userFriendlyMsg,
+        })
+      }
+    } else {
+      // No key configured on server
+      if (!isCloud) {
         try {
-          const fallbackReply = await callLocalOllamaChat({
+          const reply = await callLocalOllamaChat({
             messages: chatPayloadMessages,
-            timeoutMs: 20000,
+            timeoutMs: 15000,
             requestId,
           })
           return sendJson(res, 200, {
             success: true,
             requestId,
-            provider: 'ollama-fallback',
-            message: cleanThinkingTags(fallbackReply),
+            provider: 'ollama',
+            message: cleanThinkingTags(reply),
           })
         } catch {
-          const isRateLimit = openRouterErr.isQuotaExceeded || openRouterErr.status === 429
-          return sendJson(res, 200, {
-            success: false,
-            requestId,
-            isQuotaExceeded: isRateLimit,
-            message: isRateLimit
-              ? 'The free AI service is temporarily busy due to provider rate limits. Please wait 15–20 seconds and ask again.'
-              : `The AI service encountered a temporary error. Please try again in a moment.`,
-          })
+          // fall through to error
         }
       }
-    } else {
-      // Local Ollama
-      try {
-        const reply = await callLocalOllamaChat({
-          messages: chatPayloadMessages,
-          timeoutMs: 20000,
-          requestId,
-        })
-        return sendJson(res, 200, {
-          success: true,
-          requestId,
-          provider: 'ollama',
-          message: cleanThinkingTags(reply),
-        })
-      } catch (ollamaErr) {
-        return sendJson(res, 200, {
-          success: false,
-          requestId,
-          message:
-            'AI connection is currently offline. Please configure the OPENROUTER_API_KEY environment variable on your server.',
-        })
-      }
+
+      return sendJson(res, 503, {
+        success: false,
+        requestId,
+        code: 'CONFIG_MISSING_KEY',
+        error: 'OPENROUTER_API_KEY is not configured on your server.',
+        message:
+          'OPENROUTER_API_KEY is not configured on your server. Please add OPENROUTER_API_KEY in your Vercel Project Settings > Environment Variables.',
+      })
     }
   } catch (err) {
     const statusCode = err.status || 500

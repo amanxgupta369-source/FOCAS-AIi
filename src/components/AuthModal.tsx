@@ -14,6 +14,7 @@ import {
   Eye,
   EyeOff,
   KeyRound,
+  UserCheck,
 } from 'lucide-react'
 import {
   isSupabaseConfigured,
@@ -22,6 +23,7 @@ import {
   resetPasswordForEmail,
   signOutUser,
 } from '../lib/supabase'
+import { saveGuestPreferences } from '../lib/store'
 import type { User } from '@supabase/supabase-js'
 
 interface AuthModalProps {
@@ -307,10 +309,13 @@ export default function AuthModal({
             </div>
 
             <button
-              onClick={onClose}
+              onClick={() => {
+                saveGuestPreferences({ isGuest: true })
+                onClose()
+              }}
               className="w-full btn-primary text-xs py-2.5 flex items-center justify-center gap-2"
             >
-              Continue in Local Mode <ArrowRight size={14} />
+              Continue as Guest <ArrowRight size={14} />
             </button>
           </div>
         ) : forgotPasswordMode ? (
@@ -555,15 +560,33 @@ export default function AuthModal({
               </button>
             </form>
 
-            {/* Optional Registration: Continue in Guest Mode */}
-            <div className="mt-4 border-t border-white/15 pt-3 text-center">
-              <button
-                type="button"
-                onClick={onClose}
-                className="text-[11px] text-dusk-mute hover:text-dusk-ink underline transition"
-              >
-                Continue in Guest Mode (Offline on this device)
-              </button>
+            {/* Guest Mode: Try without signing in */}
+            <div className="mt-5 pt-4 border-t border-white/20">
+              <div className="rounded-2xl bg-white/20 border border-white/30 p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-dusk-ink">
+                    <UserCheck size={14} className="text-dusk-deep shrink-0" />
+                    <span>Want to try FOCAS first?</span>
+                  </div>
+                  <p className="text-[11px] text-dusk-mute mt-0.5 leading-snug">
+                    Use real AI evaluations and explore ideas without an account. Saved locally in this browser.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    saveGuestPreferences({ isGuest: true })
+                    onClose()
+                  }}
+                  className="w-full sm:w-auto btn-ghost py-2 px-3.5 text-xs font-semibold text-dusk-ink bg-white/60 hover:bg-white flex items-center justify-center gap-1.5 shrink-0 border border-white/40 shadow-xs transition"
+                >
+                  <span>Continue as Guest</span>
+                  <ArrowRight size={13} />
+                </button>
+              </div>
+              <p className="text-[10px] text-dusk-mute text-center mt-2">
+                Note: Local guest data is saved in this browser and does not automatically sync across devices.
+              </p>
             </div>
           </div>
         )}

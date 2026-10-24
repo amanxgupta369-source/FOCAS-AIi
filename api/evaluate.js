@@ -177,7 +177,10 @@ Output ONLY a single valid JSON object with these fields in simple, clear Englis
     let provider = 'openrouter'
 
     // 5. Attempt OpenRouter if API key is present
-    if (process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_API_KEY.trim()) {
+    const hasKey = Boolean((process.env.OPENROUTER_API_KEY || process.env.VITE_OPENROUTER_API_KEY || '').trim())
+    const isCloud = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NODE_ENV === 'production')
+
+    if (hasKey) {
       try {
         rawOutput = await callOpenRouter({
           messages: [
@@ -197,6 +200,8 @@ Output ONLY a single valid JSON object with these fields in simple, clear Englis
         })
       } catch (openRouterErr) {
         const isQuota = openRouterErr.isQuotaExceeded || openRouterErr.status === 429
+        const isInvalidKey = openRouterErr.status === 401 || openRouterErr.code === 'INVALID_API_KEY'
+        const isMissingKey = openRouterErr.code === 'CONFIG_MISSING_KEY'
         logEvent({
           level: isQuota ? 'warn' : 'error',
           event: 'openrouter_eval_fallback_triggered',
@@ -206,59 +211,70 @@ Output ONLY a single valid JSON object with these fields in simple, clear Englis
           metadata: { isQuota },
         })
 
-        if (isQuota) {
+        if (!isCloud) {
+          // If in local dev environment, attempt local Ollama
+          try {
+            rawOutput = await callLocalOllamaChat({
+              messages: [
+                { role: 'system', content: 'You are FOCAS AI. Return valid JSON only.' },
+                { role: 'user', content: evaluationPrompt },
+              ],
+              timeoutMs: 15000,
+              requestId,
+            })
+            provider = 'ollama-fallback'
+          } catch {
+            // Local Ollama offline
+          }
+        }
+
+        if (!rawOutput) {
+          let noticeText = 'AI is temporarily unavailable. FOCAS Basic Evaluation is ready to help you continue.'
+          if (isQuota) {
+            noticeText = 'OpenRouter free model quota is temporarily exhausted or rate-limited. FOCAS Basic Evaluation activated.'
+          } else if (isInvalidKey) {
+            noticeText = 'The server OPENROUTER_API_KEY is invalid or unauthorized. FOCAS Basic Evaluation activated.'
+          } else if (isMissingKey) {
+            noticeText = 'OPENROUTER_API_KEY is not configured on the server. FOCAS Basic Evaluation activated.'
+          }
+
           return sendJson(res, 200, {
             success: false,
             requestId,
             fallback: true,
-            isQuotaExceeded: true,
-            error: openRouterErr.message,
-            notice: 'OpenRouter free model quota exhausted or rate-limited. FOCAS Basic Evaluation activated.',
+            isQuotaExceeded: isQuota,
+            error: openRouterErr.message || noticeText,
+            notice: noticeText,
           })
         }
-
-        // If not quota exhausted, try local Ollama if running
+      }
+    } else {
+      // No OpenRouter API key configured: try local Ollama only for local dev
+      if (!isCloud) {
         try {
           rawOutput = await callLocalOllamaChat({
             messages: [
               { role: 'system', content: 'You are FOCAS AI. Return valid JSON only.' },
               { role: 'user', content: evaluationPrompt },
             ],
-            timeoutMs: 20000,
+            timeoutMs: 15000,
             requestId,
           })
-          provider = 'ollama-fallback'
+          provider = 'ollama'
         } catch {
-          return sendJson(res, 200, {
-            success: false,
-            requestId,
-            fallback: true,
-            isQuotaExceeded: false,
-            error: openRouterErr.message,
-            notice: 'AI is temporarily unavailable. FOCAS Basic Evaluation is ready to help you continue.',
-          })
+          // Local Ollama offline
         }
       }
-    } else {
-      // No OpenRouter API key configured: try local Ollama for local dev
-      try {
-        rawOutput = await callLocalOllamaChat({
-          messages: [
-            { role: 'system', content: 'You are FOCAS AI. Return valid JSON only.' },
-            { role: 'user', content: evaluationPrompt },
-          ],
-          timeoutMs: 20000,
-          requestId,
-        })
-        provider = 'ollama'
-      } catch (ollamaErr) {
+
+      if (!rawOutput) {
+        const noticeText = 'OPENROUTER_API_KEY is not configured on your server. FOCAS Basic Evaluation activated.'
         return sendJson(res, 200, {
           success: false,
           requestId,
           fallback: true,
           isQuotaExceeded: false,
-          error: 'AI is unavailable (no key or offline). FOCAS Basic Evaluation activated.',
-          notice: 'AI is temporarily unavailable. FOCAS Basic Evaluation is ready to help you continue.',
+          error: noticeText,
+          notice: noticeText,
         })
       }
     }

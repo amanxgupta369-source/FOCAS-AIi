@@ -8,13 +8,17 @@ import {
 
 export default async function handler(req, res) {
   const requestId = getRequestId(req)
-  const hasKey = !!(process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_API_KEY.trim())
+  const hasKey = Boolean(
+    (process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_API_KEY.trim()) ||
+    (process.env.VITE_OPENROUTER_API_KEY && process.env.VITE_OPENROUTER_API_KEY.trim())
+  )
+  const isCloud = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NODE_ENV === 'production')
 
   let localOllamaConnected = false
-  if (!hasKey) {
+  if (!hasKey && !isCloud) {
     try {
       const controller = new AbortController()
-      const timer = setTimeout(() => controller.abort(), 2000)
+      const timer = setTimeout(() => controller.abort(), 1500)
       const testRes = await fetch(`${LOCAL_OLLAMA_BASE}/api/tags`, { signal: controller.signal })
       clearTimeout(timer)
       localOllamaConnected = testRes.ok

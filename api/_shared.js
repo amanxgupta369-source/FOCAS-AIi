@@ -15,9 +15,10 @@ export const OPENROUTER_MODEL = 'qwen/qwen-2.5-7b-instruct:free'
 export const OPENROUTER_FALLBACK_MODELS = [
   'qwen/qwen-2.5-7b-instruct:free',
   'meta-llama/llama-3.3-70b-instruct:free',
-  'google/gemini-2.0-flash-exp:free',
-  'meta-llama/llama-3.2-3b-instruct:free',
+  'meta-llama/llama-3.1-8b-instruct:free',
   'mistralai/mistral-7b-instruct:free',
+  'google/gemini-2.0-flash-exp:free',
+  'openrouter/free',
 ]
 export const LOCAL_OLLAMA_BASE = 'http://127.0.0.1:11434'
 export const MAX_BODY_BYTES = 64 * 1024 // 64 KB
@@ -233,16 +234,19 @@ export async function callOpenRouter({
   timeoutMs = 25000,
   requestId = 'req_unknown',
 }) {
-  const apiKey = process.env.OPENROUTER_API_KEY
-  if (!apiKey || !apiKey.trim()) {
-    throw new Error('OPENROUTER_API_KEY is not configured on the server.')
+  const apiKey = (process.env.OPENROUTER_API_KEY || process.env.VITE_OPENROUTER_API_KEY || '').trim()
+  if (!apiKey) {
+    const err = new Error('OPENROUTER_API_KEY is not configured on the server.')
+    err.status = 503
+    err.code = 'CONFIG_MISSING_KEY'
+    throw err
   }
 
   // Attempt up to 2 tries for transient network/502/503 errors.
-  // STRICT RULE: If status === 429 (quota exhausted), NEVER retry!
+  // STRICT RULE: If status === 429 (quota exhausted) or 401 (unauthorized), NEVER retry!
   const maxAttempts = 2
   let attempt = 0
-  let modelToUse = OPENROUTER_MODEL
+  const modelsToTry = [OPENROUTER_MODEL, ...OPENROUTER_FALLBACK_MODELS.filter(m => m !== OPENROUTER_MODEL)]
 
   while (attempt < maxAttempts) {
     attempt++
@@ -255,13 +259,13 @@ export async function callOpenRouter({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey.trim()}`,
+          'Authorization': `Bearer ${apiKey}`,
           'HTTP-Referer': 'https://focas-ai.app',
           'X-Title': 'FOCAS AI Startup Advisor',
         },
         body: JSON.stringify({
-          model: modelToUse,
-          models: OPENROUTER_FALLBACK_MODELS,
+          models: modelsToTry,
+          route: 'fallback',
           messages,
           temperature,
           max_tokens: maxTokens,
@@ -272,18 +276,19 @@ export async function callOpenRouter({
       clearTimeout(timer)
       const durationMs = Date.now() - startTime
 
-      // If OpenRouter returns 404 on initial model, try next available in fallback list
-      if (response.status === 404 && attempt < maxAttempts) {
-        const nextModel = OPENROUTER_FALLBACK_MODELS[attempt] || 'meta-llama/llama-3.3-70b-instruct:free'
+      // 401 Unauthorized: Invalid API key -> NO RETRY, throw immediately
+      if (response.status === 401) {
         logEvent({
-          level: 'warn',
-          event: 'openrouter_model_not_found_trying_fallback',
+          level: 'error',
+          event: 'openrouter_unauthorized',
           requestId,
-          status: 404,
-          metadata: { retiredModel: modelToUse, nextModel },
+          status: 401,
+          durationMs,
         })
-        modelToUse = nextModel
-        continue
+        const err = new Error('OpenRouter API key is invalid or unauthorized.')
+        err.status = 401
+        err.code = 'INVALID_API_KEY'
+        throw err
       }
 
       // 429: Quota exhausted or rate limited -> NO RETRY LOOP
@@ -299,6 +304,7 @@ export async function callOpenRouter({
         })
         const err = new Error('OpenRouter free model quota exhausted or rate-limited.')
         err.status = 429
+        err.code = 'RATE_LIMIT_EXCEEDED'
         err.isQuotaExceeded = true
         throw err
       }
@@ -335,20 +341,26 @@ export async function callOpenRouter({
         requestId,
         status: 200,
         durationMs,
-        metadata: { model: OPENROUTER_MODEL, tokensReturned: content.length },
+        metadata: { model: data.model || OPENROUTER_MODEL, tokensReturned: content.length },
       })
 
       return cleanThinkingTags(content)
     } catch (err) {
       clearTimeout(timer)
 
-      // If quota exceeded or client aborted, rethrow immediately without retrying
-      if (err.isQuotaExceeded || err.status === 429) {
+      // If quota exceeded or client aborted or invalid key, rethrow immediately without retrying
+      if (
+        err.isQuotaExceeded ||
+        err.status === 429 ||
+        err.status === 401 ||
+        err.code === 'CONFIG_MISSING_KEY' ||
+        err.code === 'INVALID_API_KEY'
+      ) {
         throw err
       }
 
       // If transient network failure and attempts remain, retry once
-      if (attempt < maxAttempts && !err.isQuotaExceeded) {
+      if (attempt < maxAttempts) {
         logEvent({
           level: 'warn',
           event: 'openrouter_network_retry',
@@ -369,7 +381,18 @@ export async function callOpenRouter({
 /**
  * Fallback to local Ollama if developer has it running locally
  */
-export async function callLocalOllamaChat({ messages, timeoutMs = 25000, requestId = 'req_local' }) {
+export async function callLocalOllamaChat({ messages, timeoutMs = 15000, requestId = 'req_local' }) {
+  // CRITICAL: On Vercel or cloud production, Ollama at 127.0.0.1:11434 will NEVER exist.
+  // Immediately throw so serverless execution does not hang for 20 seconds!
+  const isCloudDeployment = Boolean(
+    process.env.VERCEL ||
+    process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    process.env.NODE_ENV === 'production'
+  )
+  if (isCloudDeployment) {
+    throw new Error('Local Ollama is not available in cloud deployment environment (Vercel).')
+  }
+
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(new Error('Local Ollama timed out')), timeoutMs)
 

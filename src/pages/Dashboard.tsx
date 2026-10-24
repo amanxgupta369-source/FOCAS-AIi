@@ -233,9 +233,12 @@ export function Shell({
               <LogIn size={15} />
               <span>Sign In / Create Account</span>
             </button>
-            <div className="flex items-center justify-center gap-1.5 text-[10px] text-dusk-mute">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500/80"></span>
-              <span>Guest Mode (Local storage)</span>
+            <div className="flex items-center justify-between px-1 text-[10px] text-dusk-mute">
+              <div className="flex items-center gap-1.5">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500/80"></span>
+                <span>Guest Mode (Local)</span>
+              </div>
+              <span className="text-[9px] text-dusk-mute/80" title="Saved locally on this browser">This browser only</span>
             </div>
           </div>
         )}

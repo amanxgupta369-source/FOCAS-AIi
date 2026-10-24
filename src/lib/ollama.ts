@@ -469,11 +469,20 @@ export async function chatWithOllama(
 
     if (res.ok) {
       const data = await res.json()
-      if (data?.message) {
+      if (data?.success && data?.message) {
         return data.message
       }
+      if (data && !data.success) {
+        throw new Error(data.message || data.error || 'The AI service returned an error.')
+      }
+    } else {
+      const data = await res.json().catch(() => null)
+      throw new Error(data?.message || data?.error || `AI service returned error (${res.status}).`)
     }
   } catch (err: any) {
+    if (err.message?.includes('OPENROUTER_API_KEY') || err.message?.includes('rate limit') || err.message?.includes('quota') || err.message?.includes('invalid')) {
+      throw err
+    }
     console.warn('Server chat call failed, testing local fallback:', err.message)
   }
 

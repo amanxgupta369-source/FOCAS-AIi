@@ -17,27 +17,110 @@ import type { User } from '@supabase/supabase-js'
 
 const STORAGE_KEY_V2 = 'focas.projects.v2'
 const STORAGE_KEY_V1 = 'focas.projects.v1'
+const STORAGE_KEY_GUEST_PREFS = 'focas.guest.preferences.v1'
+
+export interface GuestPreferences {
+  isGuest: boolean
+  lastActive: string
+  dismissedSyncNotice?: boolean
+}
+
+export function getGuestPreferences(): GuestPreferences {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_GUEST_PREFS)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed && typeof parsed === 'object') {
+        return {
+          isGuest: Boolean(parsed.isGuest),
+          lastActive: typeof parsed.lastActive === 'string' ? parsed.lastActive : new Date().toISOString(),
+          dismissedSyncNotice: Boolean(parsed.dismissedSyncNotice),
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to read guest preferences from localStorage:', err)
+  }
+  return {
+    isGuest: true,
+    lastActive: new Date().toISOString(),
+    dismissedSyncNotice: false,
+  }
+}
+
+export function saveGuestPreferences(patch: Partial<GuestPreferences>): void {
+  try {
+    const current = getGuestPreferences()
+    const updated = {
+      ...current,
+      ...patch,
+      lastActive: new Date().toISOString(),
+    }
+    localStorage.setItem(STORAGE_KEY_GUEST_PREFS, JSON.stringify(updated))
+  } catch (err) {
+    console.warn('Failed to save guest preferences to localStorage:', err)
+  }
+}
 
 function loadInitialProjects(): Project[] {
   try {
     const rawV2 = localStorage.getItem(STORAGE_KEY_V2)
     if (rawV2) {
-      const parsed = JSON.parse(rawV2) as Project[]
-      return sortProjects(parsed)
+      let parsed: any
+      try {
+        parsed = JSON.parse(rawV2)
+      } catch (parseErr) {
+        console.warn('Corrupted JSON detected in localStorage, falling back to samples:', parseErr)
+        return sortProjects(SAMPLE_PROJECTS)
+      }
+
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Validate each item to guarantee no corrupted or malformed objects break the UI
+        const validatedProjects: Project[] = parsed
+          .filter(p => p && typeof p === 'object' && typeof p.id === 'string' && p.form && typeof p.form === 'object')
+          .map(p => ({
+            ...p,
+            status: normalizeStatus(p.status),
+            history: Array.isArray(p.history) ? p.history : [],
+            chatHistory: Array.isArray(p.chatHistory) ? p.chatHistory : [],
+            interviews: Array.isArray(p.interviews) ? p.interviews : [],
+            trackedAssumptions: Array.isArray(p.trackedAssumptions) ? p.trackedAssumptions : [],
+            updated: typeof p.updated === 'string' ? p.updated : new Date().toISOString(),
+          }))
+
+        if (validatedProjects.length > 0) {
+          return sortProjects(validatedProjects)
+        }
+      }
     }
 
     // Attempt migration from v1
     const rawV1 = localStorage.getItem(STORAGE_KEY_V1)
     if (rawV1) {
-      const parsedV1 = JSON.parse(rawV1) as Project[]
-      const migrated = parsedV1.map(p => ({
-        ...p,
-        status: normalizeStatus(p.status),
-        history: p.history || [],
-        chatHistory: p.chatHistory || [],
-      }))
-      localStorage.setItem(STORAGE_KEY_V2, JSON.stringify(migrated))
-      return sortProjects(migrated)
+      try {
+        const parsedV1 = JSON.parse(rawV1)
+        if (Array.isArray(parsedV1)) {
+          const migrated: Project[] = parsedV1
+            .filter(p => p && typeof p === 'object' && typeof p.id === 'string' && p.form && typeof p.form === 'object')
+            .map(p => ({
+              ...p,
+              status: normalizeStatus(p.status),
+              history: Array.isArray(p.history) ? p.history : [],
+              chatHistory: Array.isArray(p.chatHistory) ? p.chatHistory : [],
+              interviews: [],
+              trackedAssumptions: [],
+              updated: typeof p.updated === 'string' ? p.updated : new Date().toISOString(),
+            }))
+          try {
+            localStorage.setItem(STORAGE_KEY_V2, JSON.stringify(migrated))
+          } catch {
+            // private mode or quota
+          }
+          return sortProjects(migrated)
+        }
+      } catch {
+        // ignore corrupted v1
+      }
     }
 
     return sortProjects(SAMPLE_PROJECTS)

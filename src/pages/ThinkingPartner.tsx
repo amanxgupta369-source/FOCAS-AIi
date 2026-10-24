@@ -13,6 +13,7 @@ import {
   RotateCcw,
   Bot,
   User as UserIcon,
+  AlertCircle,
 } from 'lucide-react'
 import { Glass } from '../components/ui'
 import type { ChatMessage, Route } from '../types'
@@ -118,28 +119,27 @@ export default function ThinkingPartner({
       })
       clearTimeout(timer)
 
-      if (!res.ok) {
-        throw new Error(`Server status ${res.status}`)
+      const data = await res.json().catch(() => null)
+
+      if (!res.ok || !data?.success) {
+        const errorText = data?.message || data?.error || `AI service returned error (Status ${res.status}).`
+        setErrorMsg(errorText)
+        return
       }
 
-      const data = await res.json()
-      if (!data.success && data.error) {
-        throw new Error(data.error)
+      const replyText = data.message || data.text
+      if (!replyText) {
+        setErrorMsg('The AI returned an empty response. Please try sending your question again.')
+        return
       }
 
-      const replyText = data.message || data.text || 'I could not generate an answer.'
       setMessages(prev => [...prev, { role: 'assistant', text: replyText }])
     } catch (err: any) {
-      console.warn('Chat request failed, providing thoughtful offline response:', err.message)
-      const offlineFallback = generateThinkingFallback(trimmed, updatedMessages)
-      setMessages(prev => [
-        ...prev,
-        {
-          role: 'assistant',
-          text: offlineFallback,
-          error: false,
-        },
-      ])
+      console.warn('Chat request failed:', err.message)
+      const errorText = err.name === 'AbortError' || err.message?.includes('timed out')
+        ? 'AI request timed out after 25 seconds. Please try again.'
+        : err.message || 'Could not connect to the AI service. Please check your internet connection and try again.'
+      setErrorMsg(errorText)
     } finally {
       setBusy(false)
     }
@@ -310,8 +310,23 @@ export default function ThinkingPartner({
           )}
 
           {errorMsg && (
-            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800">
-              {errorMsg}
+            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start justify-between gap-3 shadow-xs">
+              <div className="flex items-start gap-2">
+                <AlertCircle size={15} className="shrink-0 mt-0.5 text-rose-600" />
+                <span className="leading-snug">{errorMsg}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const lastUser = [...messages].reverse().find(m => m.role === 'user')
+                  if (lastUser) {
+                    send(lastUser.text)
+                  }
+                }}
+                className="text-xs font-semibold text-rose-700 hover:text-rose-900 underline shrink-0 cursor-pointer"
+              >
+                Retry
+              </button>
             </div>
           )}
 
