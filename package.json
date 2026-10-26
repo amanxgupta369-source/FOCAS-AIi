@@ -1,13 +1,10 @@
 {
-  "name": "focas-ai-workspace",
-  "private": true,
-  "version": "1.0.0",
-  "workspaces": [
-    "focas-ai369"
-  ],
-  "scripts": {
-    "dev": "npm --prefix focas-ai369 run dev",
-    "build": "npm --prefix focas-ai369 run build",
-    "preview": "npm --prefix focas-ai369 run preview"
-  }
+"name": "focas-ai",
+"private": true,
+"version": "1.0.0",
+"scripts": {
+"dev": "vite",
+"build": "vite build",
+"preview": "vite preview"
+}
 }
