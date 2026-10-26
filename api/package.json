@@ -1,0 +1,13 @@
+{
+  "name": "focas-ai-workspace",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "focas-ai369"
+  ],
+  "scripts": {
+    "dev": "npm --prefix focas-ai369 run dev",
+    "build": "npm --prefix focas-ai369 run build && node -e \"const fs=require('fs');if(fs.existsSync('focas-ai369/dist')&&!fs.existsSync('dist')){fs.cpSync('focas-ai369/dist','dist',{recursive:true})}\"",
+    "preview": "npm --prefix focas-ai369 run preview"
+  }
+}
