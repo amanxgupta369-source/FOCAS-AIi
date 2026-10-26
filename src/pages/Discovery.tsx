@@ -99,7 +99,7 @@ Problem: ${opp.problem}
 Target: ${opp.whoExperiencesIt}
 Important unknowns: ${opp.importantUnknowns.join('; ')}
 How would you advise me to test if this is a genuine problem worth solving?`
-    go({ page: 'chat', initialTopic: promptSeed })
+    go({ page: 'new', seed: promptSeed })
   }
 
   return (
@@ -121,12 +121,6 @@ How would you advise me to test if this is a genuine problem worth solving?`
         </div>
 
         <div className="flex items-center gap-2 self-stretch sm:self-auto">
-          <button
-            onClick={() => go({ page: 'chat' })}
-            className="btn-ghost text-xs flex items-center gap-1.5 flex-1 sm:flex-initial justify-center"
-          >
-            <Sparkles size={14} className="text-dusk-deep" /> Think with FOCAS
-          </button>
           <button
             onClick={() => go({ page: 'new' })}
             className="btn-primary text-xs flex items-center gap-1.5 flex-1 sm:flex-initial justify-center shadow-xs"

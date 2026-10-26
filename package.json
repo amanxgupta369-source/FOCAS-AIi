@@ -2,6 +2,9 @@
   "name": "focas-ai-workspace",
   "private": true,
   "version": "1.0.0",
+  "workspaces": [
+    "focas-ai369"
+  ],
   "scripts": {
     "dev": "npm --prefix focas-ai369 run dev",
     "build": "npm --prefix focas-ai369 run build",
