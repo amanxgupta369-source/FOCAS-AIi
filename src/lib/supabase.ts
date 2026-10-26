@@ -11,12 +11,15 @@
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js'
 import type { Project, Status, EvaluationVersion, CustomerInterview, TrackedAssumption, ChatMessage } from '../types'
 
-let rawUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim()
+const DEFAULT_SUPABASE_URL = 'https://egjmhgsewutduzinvxse.supabase.co'
+const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_hv2UgUZa7Fgg7ApqTgEdJA_Pdnp1z2D'
+
+let rawUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim() || DEFAULT_SUPABASE_URL
 if (rawUrl && !rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
   rawUrl = `https://${rawUrl}.supabase.co`
 }
 const supabaseUrl = rawUrl
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() || ''
+const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() || '') || DEFAULT_SUPABASE_ANON_KEY
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
@@ -131,6 +134,7 @@ export async function fetchProjectsFromCloud(userId: string): Promise<Project[]>
   const { data: assumptionsData } = await supabase
     .from('tracked_assumptions')
     .select('*')
+    .eq('user_id', userId)
   const { data: historyData } = await supabase
     .from('evaluation_history')
     .select('*')
@@ -277,8 +281,11 @@ export async function upsertProjectToCloud(project: Project, userId: string): Pr
 
   // Persist assumptions if any
   if (project.trackedAssumptions && project.trackedAssumptions.length > 0) {
+    const isUuid = (str: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str)
+
     const assumptionRows = project.trackedAssumptions.map(a => ({
-      id: a.id,
+      id: isUuid(a.id) ? a.id : crypto.randomUUID(),
       project_id: project.id,
       user_id: userId,
       assumption: a.assumption,

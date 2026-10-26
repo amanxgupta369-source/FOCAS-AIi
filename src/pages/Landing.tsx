@@ -1,8 +1,7 @@
-import { useState, useMemo } from 'react'
-import { ArrowRight, Plus, Search, Compass, ShieldQuestion, X, LogIn, LogOut, Cloud, Sparkles, MessageSquare } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowRight, Plus, Search, Compass, ShieldQuestion, X, LogIn, LogOut, Cloud } from 'lucide-react'
 import { Logo } from '../components/ui'
 import { signOutUser } from '../lib/supabase'
-import { getDailyDiscovery } from '../data/discoveryData'
 import type { User } from '@supabase/supabase-js'
 
 const ACTIONS = [
@@ -13,23 +12,40 @@ const ACTIONS = [
 
 function HowItWorks({ onClose }: { onClose: () => void }) {
   const steps = [
-    { n: '01', t: 'Describe your idea or explore a problem', d: 'Tell FOCAS what you want to build, or brainstorm problems worth solving.' },
-    { n: '02', t: 'Investigate the opportunity', d: 'Explore competitors, evidence, risks, and critical assumptions.' },
-    { n: '03', t: 'Decide what to validate', d: 'Get practical experiments and actionable recommendations for what to do next.' },
+    {
+      n: '01',
+      t: 'Describe your startup idea',
+      d: 'Tell FOCAS what problem you want to solve, who experiences it, and how your product works.',
+    },
+    {
+      n: '02',
+      t: 'First-principles logic evaluation',
+      d: 'Our 12 deterministic modules evaluate customer urgency, habit inertia, unit economics, and operational risks.',
+    },
+    {
+      n: '03',
+      t: 'Actionable validation roadmap',
+      d: 'Get tailored Mom-Test discovery questions, practical pre-build experiments, and clear go/no-go milestones.',
+    },
   ]
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 fade-in" onClick={onClose}>
       <div className="absolute inset-0 bg-dusk-ink/30 backdrop-blur-sm" />
-      <div className="glass-solid relative z-10 w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
+      <div className="glass-solid relative z-10 w-full max-w-md p-8 rounded-3xl" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold">How it works</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-white/20 transition" aria-label="Close"><X size={18} /></button>
+          <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-white/20 transition" aria-label="Close">
+            <X size={18} />
+          </button>
         </div>
         <div className="space-y-5">
           {steps.map(s => (
             <div key={s.n} className="flex gap-4">
               <span className="text-sm font-semibold text-dusk-deep/50 pt-0.5 tabular-nums">{s.n}</span>
-              <div><h3 className="font-semibold text-[15px]">{s.t}</h3><p className="text-sm text-dusk-mute mt-0.5 leading-relaxed">{s.d}</p></div>
+              <div>
+                <h3 className="font-semibold text-[15px]">{s.t}</h3>
+                <p className="text-sm text-dusk-mute mt-0.5 leading-relaxed">{s.d}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -40,36 +56,34 @@ function HowItWorks({ onClose }: { onClose: () => void }) {
 
 export default function Landing({
   onStart,
-  onStartChat,
-  onStartDiscover,
   user,
   onOpenAuth,
 }: {
   onStart: (seed?: string, evaluateImmediately?: boolean) => void
-  onStartChat: () => void
-  onStartDiscover?: () => void
   user?: User | null
   onOpenAuth?: () => void
 }) {
   const [idea, setIdea] = useState('')
   const [showHow, setShowHow] = useState(false)
-  const dailyDiscovery = useMemo(() => getDailyDiscovery(), [])
+
   return (
     <div className="min-h-screen flex flex-col">
       <nav className="glass mx-3 sm:mx-4 mt-3 sm:mt-4 flex items-center justify-between px-5 py-3" aria-label="Main">
         <Logo />
         <div className="flex items-center gap-2">
-          <button className="rounded-lg px-3 py-2 text-sm font-medium text-dusk-ink transition hover:bg-white/15" onClick={() => setShowHow(true)}>How it works</button>
-          <button className="rounded-lg px-3 py-2 text-sm font-medium text-dusk-ink transition hover:bg-white/15 flex items-center gap-1.5" onClick={onStartDiscover}>
-            <Compass size={14} className="text-dusk-deep" />
-            <span>Discover Problems</span>
+          <button
+            className="rounded-lg px-3 py-2 text-sm font-medium text-dusk-ink transition hover:bg-white/15"
+            onClick={() => setShowHow(true)}
+          >
+            How it works
           </button>
-          <button className="rounded-lg px-3 py-2 text-sm font-medium text-dusk-ink transition hover:bg-white/15 flex items-center gap-1.5" onClick={onStartChat}>
-            <Sparkles size={14} className="text-dusk-deep" />
-            <span>Think with FOCAS</span>
+          <button
+            className="rounded-lg px-3 py-2 text-sm font-medium text-dusk-ink transition hover:bg-white/15"
+            onClick={() => onStart()}
+          >
+            Projects
           </button>
-          <button className="rounded-lg px-3 py-2 text-sm font-medium text-dusk-ink transition hover:bg-white/15" onClick={() => onStart()}>Projects</button>
-          
+
           {user ? (
             <div className="flex items-center gap-1.5 pl-2 border-l border-white/20">
               <button
@@ -106,6 +120,7 @@ export default function Landing({
           )}
         </div>
       </nav>
+
       <main className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-2xl rise">
           <div className="text-center mb-8">
@@ -116,17 +131,19 @@ export default function Landing({
             </p>
           </div>
 
-          {/* Option A: Evaluate an Existing Idea */}
-          <div className="glass-solid p-5 sm:p-7 shadow-lg">
+          {/* Evaluate an Idea */}
+          <div className="glass-solid p-5 sm:p-7 shadow-lg rounded-3xl">
             <div className="flex items-center justify-between mb-3">
               <label htmlFor="idea-input" className="text-xs font-bold uppercase tracking-wider text-dusk-deep">
-                Option A · Evaluate an Idea
+                Evaluate an Idea
               </label>
-              <span className="text-[11px] text-dusk-mute">Instant structured report</span>
+              <span className="text-[11px] text-dusk-mute bg-white/40 px-2 py-0.5 rounded-full font-medium">
+                Deterministic First-Principles Report
+              </span>
             </div>
             <textarea
               id="idea-input"
-              className="input min-h-[120px] resize-none text-[15px] leading-relaxed"
+              className="input min-h-[130px] resize-none text-[15px] leading-relaxed"
               placeholder="Describe what you want to build and who it is for…"
               value={idea}
               onChange={e => setIdea(e.target.value)}
@@ -153,61 +170,7 @@ export default function Landing({
             {idea.length > 0 && <p className="text-right text-[11px] text-dusk-mute/50 mt-2">{idea.length}/500</p>}
           </div>
 
-          {/* Option B: Don't have an idea yet? Think with FOCAS */}
-          <div className="mt-4 rounded-3xl bg-white/20 border border-white/30 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm hover:bg-white/30 transition">
-            <div className="flex items-start gap-3 min-w-0">
-              <div className="h-10 w-10 rounded-2xl bg-dusk-deep/15 text-dusk-deep flex items-center justify-center shrink-0 mt-0.5">
-                <Sparkles size={20} />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-dusk-deep bg-white/40 px-2 py-0.5 rounded-full">
-                    Option B
-                  </span>
-                  <h2 className="text-sm font-bold text-dusk-ink">Don't have an idea yet? Think with FOCAS</h2>
-                </div>
-                <p className="text-xs text-dusk-mute mt-1 leading-relaxed">
-                  Discover real problems in industries you know, brainstorm opportunities, or challenge assumptions with an honest thinking partner.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={onStartChat}
-              className="btn-primary text-xs shrink-0 py-2.5 px-4 flex items-center gap-1.5 w-full sm:w-auto justify-center shadow-xs"
-            >
-              <MessageSquare size={14} />
-              <span>Start Conversation</span>
-            </button>
-          </div>
-
-          {/* Option C: Browse Curated Problems (Offline Knowledge Base) */}
-          <div className="mt-3 rounded-3xl bg-white/15 border border-white/25 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm hover:bg-white/25 transition">
-            <div className="flex items-start gap-3 min-w-0">
-              <div className="h-10 w-10 rounded-2xl bg-amber-500/15 text-amber-900 flex items-center justify-center shrink-0 mt-0.5">
-                <Compass size={20} />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 bg-amber-500/20 px-2 py-0.5 rounded-full">
-                    Option C · Problem Explorer
-                  </span>
-                  <h2 className="text-sm font-bold text-dusk-ink">Browse Real-World Problems Worth Solving</h2>
-                </div>
-                <p className="text-xs text-dusk-mute mt-1 leading-relaxed">
-                  Featured today: <span className="font-semibold text-dusk-ink">"{dailyDiscovery.title}"</span>. Explore curated opportunities across small business, education, and tech without an AI prompt.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={onStartDiscover}
-              className="btn-ghost text-xs shrink-0 py-2.5 px-4 flex items-center gap-1.5 w-full sm:w-auto justify-center bg-white/35 hover:bg-white/60 font-semibold text-dusk-ink"
-            >
-              <Compass size={14} />
-              <span>Explore Problems</span>
-            </button>
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-2 mt-5">
+          <div className="flex flex-wrap justify-center gap-2 mt-6">
             {ACTIONS.map(({ icon: Icon, label }) => (
               <button
                 key={label}
@@ -221,7 +184,10 @@ export default function Landing({
           </div>
         </div>
       </main>
-      <footer className="text-center text-xs text-dusk-ink/30 pb-4 pt-2">FOCAS AI — Think critically. Validate with evidence.</footer>
+
+      <footer className="text-center text-xs text-dusk-ink/30 pb-4 pt-2">
+        FOCAS — Think critically. Validate with evidence.
+      </footer>
       {showHow && <HowItWorks onClose={() => setShowHow(false)} />}
     </div>
   )

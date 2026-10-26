@@ -28,7 +28,6 @@ import {
 import type { Project, Route, Status, ProjectStatus } from '../types'
 import { Badge, Demo, Glass, Logo } from '../components/ui'
 import { signOutUser } from '../lib/supabase'
-import { getDailyDiscovery } from '../data/discoveryData'
 import type { User } from '@supabase/supabase-js'
 
 const STATUS_OPTIONS: ProjectStatus[] = ['Evaluating', 'Validating', 'Building', 'Paused']
@@ -88,24 +87,6 @@ export function Shell({
         onClick={() => nav({ page: 'dashboard' })}
       >
         <LayoutDashboard size={16} /> Home & Projects
-      </button>
-
-      <button
-        className={`btn-ghost justify-start ${
-          route.page === 'discover' ? 'ring-2 ring-dusk bg-white/20 font-semibold' : ''
-        }`}
-        onClick={() => nav({ page: 'discover' })}
-      >
-        <Compass size={16} className="text-dusk-deep" /> Discover Problems
-      </button>
-
-      <button
-        className={`btn-ghost justify-start ${
-          route.page === 'chat' ? 'ring-2 ring-dusk bg-white/20 font-semibold' : ''
-        }`}
-        onClick={() => nav({ page: 'chat' })}
-      >
-        <Sparkles size={16} className="text-dusk-deep" /> Think with FOCAS
       </button>
 
       <label className="relative">
@@ -332,7 +313,6 @@ export default function Dashboard({
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'All' | ProjectStatus>('All')
   const [sortBy, setSortBy] = useState<'updated' | 'name'>('updated')
-  const dailyDiscovery = getDailyDiscovery()
 
   // Inline editing state for project renaming
   const [renamingId, setRenamingId] = useState<string | null>(null)
@@ -480,34 +460,34 @@ export default function Dashboard({
         </form>
       </Glass>
 
-      {/* Daily Discovery Banner */}
+      {/* Founder Intelligence Frameworks Highlight */}
       <div className="rounded-3xl bg-white/20 border border-white/30 p-5 sm:p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="space-y-1.5 flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-dusk-deep text-white uppercase tracking-wider flex items-center gap-1">
-              <Sparkles size={11} /> Daily Discovery
+              <Sparkles size={11} /> Logic-Driven Intelligence
             </span>
             <span className="text-xs font-semibold text-dusk-deep uppercase tracking-wide">
-              {dailyDiscovery.category}
+              Deterministic Reasoning Engine
             </span>
-            <span className="chip text-[10px] bg-amber-500/15 text-amber-900 border border-amber-500/30 font-medium">
-              Hypothesis
+            <span className="chip text-[10px] bg-emerald-500/15 text-emerald-900 border border-emerald-500/30 font-medium">
+              Zero External AI APIs
             </span>
           </div>
           <h3 className="text-base sm:text-lg font-bold text-dusk-ink">
-            {dailyDiscovery.title}
+            First-Principles Startup Evaluation Library
           </h3>
           <p className="text-xs text-dusk-mute line-clamp-2 leading-relaxed">
-            {dailyDiscovery.tagline}
+            Evaluations are powered by 11 versioned founder frameworks: The Mom Test, Hair-on-Fire Acuity, Bottom-Up Sizing, Unit Economics, Bullseye Distribution, and Default Alive Modeling.
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
           <button
-            onClick={() => go({ page: 'discover', selectedId: dailyDiscovery.id })}
+            onClick={() => go({ page: 'new' })}
             className="btn-primary text-xs flex items-center justify-center gap-1.5 px-4 py-2.5 flex-1 md:flex-initial shadow-xs"
           >
-            <Compass size={14} />
-            <span>Explore Opportunities & Idea Lab</span>
+            <Plus size={14} />
+            <span>Evaluate a New Idea</span>
           </button>
         </div>
       </div>

@@ -133,7 +133,11 @@ export default function AuthModal({
       const raw = err.message || ''
 
       // Provide human-friendly, actionable feedback
-      if (raw.includes('Invalid login credentials')) {
+      if (raw.includes('Supabase is not configured')) {
+        setErrorMsg(
+          'Cloud authentication is currently not connected (VITE_SUPABASE_URL not configured). Please add your Supabase credentials to your deployment settings, or click "Continue as Guest" below.'
+        )
+      } else if (raw.includes('Invalid login credentials')) {
         setErrorMsg('Incorrect email or password. Please double-check your credentials.')
       } else if (raw.includes('Email not confirmed')) {
         setErrorMsg(
@@ -274,53 +278,9 @@ export default function AuthModal({
               <LogOut size={15} /> Sign Out
             </button>
           </div>
-        ) : !isSupabaseConfigured ? (
-          /* ================================================================== */
-          /* VIEW 2: SUPABASE UNCONFIGURED NOTICE                                */
-          /* ================================================================== */
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-800">
-                <Database size={22} />
-              </div>
-              <div>
-                <h3 className="font-semibold text-base">Local / Guest Mode Active</h3>
-                <p className="text-xs text-dusk-mute">Cloud database not yet configured</p>
-              </div>
-            </div>
-
-            <div className="rounded-2xl bg-amber-50/90 border border-amber-200/80 p-4 text-xs space-y-2 text-amber-950">
-              <p className="font-medium flex items-center gap-1.5">
-                <ShieldCheck size={15} className="text-amber-700 shrink-0" />
-                <span>Your work remains 100% saved on this device</span>
-              </p>
-              <p className="leading-relaxed text-amber-900 text-[11px]">
-                FOCAS stores your startup ideas in browser storage. You can evaluate ideas, run Basic Evaluations, and revisit projects without logging in.
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-white/20 border border-white/25 p-4 text-xs space-y-2 text-dusk-deep">
-              <span className="font-medium text-dusk-ink block">To enable Multi-User Cloud Accounts:</span>
-              <ol className="list-decimal list-inside space-y-1 pl-1 text-[11px]">
-                <li>Create a free project at <code className="bg-white/40 px-1 py-0.5 rounded">supabase.com</code>.</li>
-                <li>Run the provided <code className="bg-white/40 px-1 py-0.5 rounded">supabase/schema.sql</code> script.</li>
-                <li>Set <code className="bg-white/40 px-1 py-0.5 rounded">VITE_SUPABASE_URL</code> & <code className="bg-white/40 px-1 py-0.5 rounded">VITE_SUPABASE_ANON_KEY</code>.</li>
-              </ol>
-            </div>
-
-            <button
-              onClick={() => {
-                saveGuestPreferences({ isGuest: true })
-                onClose()
-              }}
-              className="w-full btn-primary text-xs py-2.5 flex items-center justify-center gap-2"
-            >
-              Continue as Guest <ArrowRight size={14} />
-            </button>
-          </div>
         ) : forgotPasswordMode ? (
           /* ================================================================== */
-          /* VIEW 3: FORGOT PASSWORD RECOVERY FLOW                              */
+          /* VIEW 2: FORGOT PASSWORD RECOVERY FLOW                              */
           /* ================================================================== */
           <div className="space-y-4">
             <div className="text-center mb-4">
@@ -433,6 +393,16 @@ export default function AuthModal({
                 Create Account
               </button>
             </div>
+
+            {!isSupabaseConfigured && (
+              <div className="mb-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 p-3 text-xs text-amber-950 flex items-start gap-2">
+                <AlertCircle size={15} className="shrink-0 mt-0.5 text-amber-700" />
+                <div className="text-[11px] leading-snug">
+                  <span className="font-semibold block text-amber-900">Cloud credentials not yet configured</span>
+                  To enable cross-device sync, configure <code className="bg-white/60 px-1 py-0.5 rounded font-mono">VITE_SUPABASE_URL</code> in deployment settings. You can also click <strong>Continue as Guest</strong> below to evaluate ideas locally.
+                </div>
+              </div>
+            )}
 
             {/* Feedback Notifications */}
             {errorMsg && (
@@ -569,7 +539,7 @@ export default function AuthModal({
                     <span>Want to try FOCAS first?</span>
                   </div>
                   <p className="text-[11px] text-dusk-mute mt-0.5 leading-snug">
-                    Use real AI evaluations and explore ideas without an account. Saved locally in this browser.
+                    Evaluate ideas with our deterministic founder intelligence engine without an account. Saved locally in this browser.
                   </p>
                 </div>
                 <button

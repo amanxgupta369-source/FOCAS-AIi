@@ -1,1 +1,10 @@
-{"name":"focas-ai","private":true,"version":"0.1.0","type":"module","scripts":{"dev":"vite","build":"tsc && vite build","preview":"vite preview"},"dependencies":{"@supabase/supabase-js":"^2.118.0","lucide-react":"^0.453.0","react":"^18.3.1","react-dom":"^18.3.1"},"devDependencies":{"@types/react":"^18.3.3","@types/react-dom":"^18.3.0","@vitejs/plugin-react":"^4.3.1","autoprefixer":"^10.4.20","postcss":"^8.4.47","tailwindcss":"^3.4.13","typescript":"^5.5.3","vite":"^5.4.8"}}
+{
+  "name": "focas-ai-workspace",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "npm --prefix focas-ai369 run dev",
+    "build": "npm --prefix focas-ai369 run build",
+    "preview": "npm --prefix focas-ai369 run preview"
+  }
+}

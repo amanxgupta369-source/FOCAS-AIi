@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import {
   Pencil,
   Trash2,
-  Send,
   RefreshCw,
   Cpu,
   AlertCircle,
@@ -42,14 +41,9 @@ import type {
 import { Badge, Demo, Glass } from '../components/ui'
 import { generateAnalysis } from '../lib/analysis'
 import { generateBasicEvaluation } from '../lib/basicEvaluation'
-import {
-  chatWithOllama,
-  checkOllamaConnection,
-  DEFAULT_MODEL,
-  EVALUATION_STAGES,
-  getCleanModelName,
-} from '../lib/ollama'
+import { EVALUATION_STAGES } from '../lib/reasoningEngine'
 import { generateOverallVerdict } from '../lib/verdict'
+import { FOUNDER_KNOWLEDGE_LIBRARY } from '../lib/founderEngine/knowledgeLibrary'
 
 const TABS = [
   'Executive Report',
@@ -59,244 +53,11 @@ const TABS = [
   'Validation Plan',
   'Validation & Evidence',
   'Open Questions',
+  'Knowledge Library',
 ] as const
 
 const EXP: ExpStatus[] = ['Not started', 'In progress', 'Completed']
 
-const SUGGESTED_QUESTIONS = [
-  'Why did you reach this conclusion? Explain the reasoning and uncertainties.',
-  'What is the single most dangerous assumption in this idea?',
-  'How would you design the simplest experiment to test willingness to pay?',
-  'What questions should I ask potential customers?',
-  'What are my suggested next 3 actions?',
-]
-
-function Chat({
-  form,
-  analysis,
-  model,
-  chatHistory,
-  onSaveChat,
-}: {
-  form: IdeaForm
-  analysis?: Analysis
-  model?: string
-  chatHistory?: import('../types').ChatMessage[]
-  onSaveChat?: (msgs: import('../types').ChatMessage[]) => void
-}) {
-  const [msgs, setMsgs] = useState<import('../types').ChatMessage[]>(chatHistory || [])
-  const [text, setText] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [connected, setConnected] = useState<boolean | null>(null)
-  const [lastError, setLastError] = useState<string | null>(null)
-
-  const activeModel = getCleanModelName(model)
-
-  const checkStatus = () => {
-    checkOllamaConnection().then(res => setConnected(res.connected))
-  }
-
-  useEffect(() => {
-    checkStatus()
-  }, [])
-
-  useEffect(() => {
-    if (chatHistory && chatHistory.length > 0 && msgs.length === 0) {
-      setMsgs(chatHistory)
-    }
-  }, [chatHistory])
-
-  const send = async (userText: string) => {
-    if (!userText.trim() || busy) return
-    const input = userText.trim()
-    const updatedHistory: import('../types').ChatMessage[] = [
-      ...msgs,
-      { role: 'user', text: input, timestamp: new Date().toISOString() },
-    ]
-    setMsgs(updatedHistory)
-    onSaveChat?.(updatedHistory)
-    setText('')
-    setBusy(true)
-    setLastError(null)
-
-    try {
-      const history = updatedHistory
-        .filter(m => !m.error)
-        .map(m => ({
-          role: m.role,
-          content: m.text,
-        }))
-
-      const aiReply = await chatWithOllama(form, analysis, history, activeModel)
-      const finalMsgs: import('../types').ChatMessage[] = [
-        ...updatedHistory,
-        { role: 'assistant', text: aiReply, timestamp: new Date().toISOString() },
-      ]
-      setMsgs(finalMsgs)
-      onSaveChat?.(finalMsgs)
-    } catch (err: any) {
-      const errorMsg =
-        err.message ||
-        'Could not communicate with the AI advisor. Please check your internet connection or server settings.'
-      setLastError(errorMsg)
-      const errorMsgs: import('../types').ChatMessage[] = [
-        ...updatedHistory,
-        {
-          role: 'assistant',
-          text: errorMsg,
-          error: true,
-          timestamp: new Date().toISOString(),
-        },
-      ]
-      setMsgs(errorMsgs)
-      onSaveChat?.(errorMsgs)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const retryLast = () => {
-    const lastUser = [...msgs].reverse().find(m => m.role === 'user')
-    if (lastUser) {
-      send(lastUser.text)
-    }
-  }
-
-  return (
-    <Glass className="flex flex-col p-4 h-full">
-      <div className="flex items-center justify-between mb-1.5">
-        <h3 className="font-semibold flex items-center gap-1.5 text-sm">
-          <Cpu size={15} className="text-dusk-deep" /> Thinking partner
-        </h3>
-        <span className="flex items-center gap-1.5 text-[11px] text-dusk-mute">
-          <span
-            className={`h-2 w-2 rounded-full ${
-              connected === true
-                ? 'bg-emerald-500'
-                : 'bg-amber-500'
-            }`}
-          />
-          <span>
-            {connected === true
-              ? 'OpenRouter (Qwen) Ready'
-              : 'Rule-Based Advisor (Active)'}
-          </span>
-        </span>
-      </div>
-      <p className="mb-2 text-xs text-dusk-mute">
-        Ask follow-up questions grounded in this idea’s evaluation report.
-      </p>
-
-      {/* Helpful alert if offline */}
-      {connected === false && (
-        <div className="rounded-xl p-2.5 bg-amber-50/50 border border-amber-300/60 text-xs text-amber-950 mb-2">
-          <div className="flex items-start gap-2">
-            <AlertCircle size={15} className="shrink-0 mt-0.5 text-amber-600" />
-            <div>
-              <p className="font-medium">External AI is temporarily offline</p>
-              <p className="text-[11px] text-amber-800/90 mt-0.5">
-                FOCAS is operating in structured Rule-Based Advisor mode. You can ask about reasoning, assumptions, experiments, and next steps using project data.
-              </p>
-              <button
-                type="button"
-                onClick={checkStatus}
-                className="mt-1 font-semibold underline text-amber-950 hover:text-black text-[11px]"
-              >
-                Check AI connection again
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Message history */}
-      <div className="min-h-[220px] max-h-[440px] flex-1 space-y-2.5 overflow-y-auto pr-1" aria-live="polite">
-        {msgs.length === 0 && (
-          <div className="space-y-1.5 pt-2">
-            <p className="text-[11px] text-dusk-mute font-medium uppercase tracking-wider">Suggested questions</p>
-            {SUGGESTED_QUESTIONS.map(p => (
-              <button
-                key={p}
-                className="w-full text-left rounded-xl p-2.5 text-xs bg-white/10 hover:bg-white/20 transition leading-relaxed text-dusk-ink border border-white/10"
-                onClick={() => send(p)}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {msgs.map((m, i) => (
-          <div
-            key={i}
-            className={`rounded-xl p-3 text-xs sm:text-sm leading-relaxed ${
-              m.role === 'user'
-                ? 'ml-6 bg-dusk-deep text-white shadow-sm'
-                : m.error
-                  ? 'mr-4 bg-rose-50/30 border border-rose-300 text-rose-900'
-                  : 'mr-4 bg-white/15 text-dusk-ink border border-white/10'
-            }`}
-          >
-            {m.text}
-          </div>
-        ))}
-
-        {busy && (
-          <div className="flex items-center gap-2 mr-4 rounded-xl bg-white/15 p-3 text-xs text-dusk-mute">
-            <span className="h-2 w-2 rounded-full bg-dusk-deep animate-ping" />
-            Formulating an answer...
-          </div>
-        )}
-
-        {lastError && !busy && (
-          <div className="flex items-center justify-between p-2 rounded-lg bg-rose-100/30 text-rose-800 text-xs">
-            <span>Request failed.</span>
-            <button className="underline font-medium hover:text-rose-950" onClick={retryLast}>
-              Retry
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Quick Action Chips */}
-      {msgs.length > 0 && (
-        <div className="pt-2 flex flex-wrap gap-1.5 border-t border-white/10">
-          {SUGGESTED_QUESTIONS.slice(0, 3).map((sq, i) => (
-            <button
-              key={i}
-              type="button"
-              className="text-[10px] px-2 py-0.5 rounded-full bg-white/15 hover:bg-white/25 text-dusk-ink transition truncate max-w-[200px]"
-              title={sq}
-              onClick={() => send(sq)}
-            >
-              {sq.split('?')[0]}?
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Input bar */}
-      <form
-        className="mt-3 flex gap-2 pt-2 border-t border-white/15"
-        onSubmit={e => {
-          e.preventDefault()
-          send(text)
-        }}
-      >
-        <input
-          className="input text-xs sm:text-sm"
-          aria-label="Ask about this idea"
-          placeholder="Ask a question about this evaluation..."
-          value={text}
-          onChange={e => setText(e.target.value)}
-        />
-        <button className="btn-primary shrink-0" aria-label="Send" type="submit" disabled={busy || !text.trim()}>
-          <Send size={15} />
-        </button>
-      </form>
-    </Glass>
-  )
-}
 
 function AnalyzingView({
   name,
@@ -319,7 +80,7 @@ function AnalyzingView({
   const elapsed = progress?.elapsedSeconds ?? localElapsed
   const completed = progress?.completedStages || []
   const current = progress?.currentStage || 'Understanding the idea'
-  const cleanModel = getCleanModelName(model)
+  const displayModel = model || 'FOCAS Founder Intelligence Engine'
 
   return (
     <div className="rise flex items-center justify-center min-h-[60vh] p-4">
@@ -423,15 +184,14 @@ export default function AnalysisPage({
 }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>('Executive Report')
   const { form: f, analysis: a } = project
-  const cleanModel = getCleanModelName(project.modelUsed)
 
   const [interviews, setInterviews] = useState<CustomerInterview[]>(project.interviews || [])
   const [assumptions, setAssumptions] = useState<TrackedAssumption[]>(() => {
     if (project.trackedAssumptions && project.trackedAssumptions.length > 0) {
       return project.trackedAssumptions
     }
-    return (a?.assumptionAnalysis || []).map((as, idx) => ({
-      id: `assump-${idx + 1}`,
+    return (a?.assumptionAnalysis || []).map((as) => ({
+      id: crypto.randomUUID(),
       assumption: as.assumption,
       category: 'Problem' as const,
       state: 'Untested' as const,
@@ -610,21 +370,12 @@ export default function AnalysisPage({
               <option value="Complete">Complete</option>
             </select>
 
-            {project.evaluationType === 'basic' ? (
-              <span
-                className="chip text-[11px] bg-amber-500/20 text-amber-950 border border-amber-500/35 font-semibold"
-                title="Structured evaluation produced using first-principles business rules without external AI"
-              >
-                Basic Evaluation
-              </span>
-            ) : (
-              <span
-                className="chip text-[11px] bg-emerald-500/20 text-emerald-950 border border-emerald-500/35 font-semibold"
-                title={`Evaluated using ${cleanModel}`}
-              >
-                AI Evaluation ({cleanModel})
-              </span>
-            )}
+            <span
+              className="chip text-[11px] bg-emerald-500/20 text-emerald-950 border border-emerald-500/35 font-semibold"
+              title="Evaluated deterministically across 12 modules with 11 founder frameworks (Zero External AI APIs)"
+            >
+              Founder Engine (Deterministic)
+            </span>
 
             <span>Updated {new Date(project.updated).toLocaleDateString()}</span>
             {project.history && project.history.length > 0 && (
@@ -650,8 +401,8 @@ export default function AnalysisPage({
             </button>
           )}
           {onReevaluate && (
-            <button className="btn-ghost flex items-center gap-1.5" onClick={onReevaluate} title="Re-evaluate with OpenRouter/Ollama">
-              <RefreshCw size={14} /> Re-evaluate
+            <button className="btn-ghost flex items-center gap-1.5" onClick={onReevaluate} title="Recalculate with Founder Intelligence Engine">
+              <RefreshCw size={14} /> Recalculate
             </button>
           )}
           <button className="btn-ghost flex items-center gap-1.5" onClick={onEdit}>
@@ -663,43 +414,38 @@ export default function AnalysisPage({
         </div>
       </Glass>
 
-      {/* Fallback Notice Banner */}
-      {project.evaluationType === 'basic' && (
-        <Glass className="p-4 border border-amber-300/50 bg-amber-50/15">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <div className="h-8 w-8 rounded-lg bg-amber-500/20 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
-                <Lightbulb size={18} />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm text-dusk-ink">
-                  AI is temporarily unavailable. FOCAS Basic Evaluation is ready to help you continue.
-                </h3>
-                <p className="text-xs text-dusk-mute mt-0.5">
-                  This report is labeled <strong>Basic Evaluation</strong>. It uses structured business rules rather than an external AI model. All recommendations are derived from your inputs and recorded evidence.
-                  {project.isQuotaExceeded && ' (OpenRouter free model quota was exhausted; requests will not repeatedly retry).'}
-                </p>
-              </div>
+      {/* Founder Intelligence Engine Banner */}
+      <Glass className="p-4 border border-emerald-300/40 bg-emerald-50/20">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="h-8 w-8 rounded-lg bg-emerald-500/20 text-emerald-800 flex items-center justify-center shrink-0 mt-0.5">
+              <ShieldCheck size={18} />
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {onReevaluate && !project.isQuotaExceeded && (
-                <button
-                  className="btn-primary text-xs flex items-center gap-1.5"
-                  onClick={onReevaluate}
-                  title="Retry with AI provider"
-                >
-                  <RefreshCw size={13} /> Retry with AI
-                </button>
-              )}
-              {project.isQuotaExceeded && (
-                <span className="text-[11px] text-dusk-mute italic">
-                  Quota exhausted. Re-try later.
+            <div>
+              <h3 className="font-semibold text-sm text-dusk-ink flex items-center gap-2">
+                <span>Deterministic Founder Intelligence Report</span>
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">
+                  Zero AI Hallucinations
                 </span>
-              )}
+              </h3>
+              <p className="text-xs text-dusk-mute mt-0.5">
+                Evaluated across 12 modules using verified first-principles frameworks (The Mom Test, Hair-on-Fire Acuity, Unit Economics). No external AI language models or inference APIs were called.
+              </p>
             </div>
           </div>
-        </Glass>
-      )}
+          <div className="flex items-center gap-2 shrink-0">
+            {onReevaluate && (
+              <button
+                className="btn-ghost text-xs flex items-center gap-1.5"
+                onClick={onReevaluate}
+                title="Recalculate evaluation"
+              >
+                <RefreshCw size={13} /> Recalculate
+              </button>
+            )}
+          </div>
+        </div>
+      </Glass>
 
       {/* Evidence toast banner */}
       {evidenceToast && (
@@ -759,23 +505,23 @@ export default function AnalysisPage({
           </div>
         </Glass>
       ) : (
-        <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
-          <div className="space-y-4">
-            {/* Tabs */}
-            <div role="tablist" className="glass flex flex-wrap gap-1 p-1.5">
-              {TABS.map(t => (
-                <button
-                  key={t}
-                  role="tab"
-                  aria-selected={tab === t}
-                  onClick={() => setTab(t)}
-                  className={`flex-1 min-w-[120px] rounded-xl px-3 py-2 text-xs sm:text-sm font-medium transition ${tab === t ? 'bg-dusk-deep text-white shadow' : 'hover:bg-white/15 text-dusk-ink'
-                    }`}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
+        <div className="space-y-4">
+          {/* Tabs */}
+          <div role="tablist" className="glass flex overflow-x-auto gap-1.5 p-1.5 no-scrollbar">
+            {TABS.map(t => (
+              <button
+                key={t}
+                role="tab"
+                aria-selected={tab === t}
+                onClick={() => setTab(t)}
+                className={`whitespace-nowrap rounded-xl px-3.5 py-2 text-xs sm:text-sm font-medium transition shrink-0 ${
+                  tab === t ? 'bg-dusk-deep text-white shadow' : 'hover:bg-white/15 text-dusk-ink'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
 
             {/* Final Overall Verdict Banner */}
             {onViewVerdict && (
@@ -1720,18 +1466,74 @@ export default function AnalysisPage({
                 </Glass>
               </div>
             )}
-          </div>
 
-          {/* Thinking Partner Chat Box */}
-          <div className="sticky top-4 h-[calc(100vh-6rem)]">
-            <Chat
-              form={f}
-              analysis={a}
-              model={project.modelUsed}
-              chatHistory={project.chatHistory}
-              onSaveChat={msgs => onChange({ ...project, chatHistory: msgs, updated: new Date().toISOString() })}
-            />
-          </div>
+            {/* TAB 7: KNOWLEDGE LIBRARY */}
+            {tab === 'Knowledge Library' && (
+              <div className="rise space-y-4" key="kl">
+                <Glass className="p-5 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                    <div>
+                      <h3 className="font-semibold text-lg flex items-center gap-2">
+                        <BookOpen size={20} className="text-dusk-deep" /> Founder Knowledge Library
+                      </h3>
+                      <p className="text-xs sm:text-sm text-dusk-mute mt-1">
+                        11 first-principles validation frameworks powering the deterministic FOCAS Founder Intelligence Engine.
+                      </p>
+                    </div>
+                    <span className="text-xs px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-950 border border-emerald-500/30 font-semibold shrink-0">
+                      Deterministic • Versioned
+                    </span>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {FOUNDER_KNOWLEDGE_LIBRARY.map(fw => (
+                      <div
+                        key={fw.id}
+                        className="rounded-2xl p-4 sm:p-5 bg-white/10 border border-white/15 space-y-3 flex flex-col justify-between"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-dusk-deep/10 text-dusk-deep font-bold">
+                              {fw.id}
+                            </span>
+                            <span className="text-[11px] text-dusk-mute font-mono">v{fw.version}</span>
+                          </div>
+                          <h4 className="font-semibold text-sm text-dusk-ink mb-1.5">{fw.title}</h4>
+                          <p className="text-xs text-dusk-mute leading-relaxed mb-3">{fw.purpose}</p>
+
+                          <div className="space-y-2 pt-2 border-t border-white/10 text-xs">
+                            <div>
+                              <span className="text-[11px] font-semibold text-dusk-ink block mb-0.5">Decision Rules:</span>
+                              <ul className="list-disc pl-4 space-y-1 text-dusk-mute text-[11px]">
+                                {fw.decisionRules.slice(0, 3).map((r, ri) => (
+                                  <li key={ri}>{r}</li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            <div>
+                              <span className="text-[11px] font-semibold text-rose-800 block mb-0.5">Known Limitations:</span>
+                              <ul className="list-disc pl-4 space-y-1 text-rose-900/80 text-[11px]">
+                                {fw.limitations.slice(0, 2).map((l, li) => (
+                                  <li key={li}>{l}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-dusk-mute">
+                          <span>Provenance: <strong className="text-dusk-ink font-medium">{fw.source}</strong></span>
+                          <span className="capitalize px-2 py-0.5 rounded-full bg-white/20 text-[10px]">
+                            {fw.area.replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Glass>
+              </div>
+            )}
         </div>
       )}
     </div>

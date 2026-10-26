@@ -417,8 +417,6 @@ export interface DiscoveryOpportunity {
 
 export type Route =
   | { page: 'landing' | 'dashboard' }
-  | { page: 'discover'; selectedId?: string }
-  | { page: 'chat'; initialTopic?: string }
   | { page: 'new'; editId?: string; seed?: string }
   | { page: 'project'; id: string }
   | { page: 'verdict'; id: string }

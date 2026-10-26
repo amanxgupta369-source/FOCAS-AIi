@@ -1,12 +1,10 @@
 import { useState, useRef } from 'react'
 import type { IdeaForm, Project, Route, EvaluationProgress } from './types'
 import { useProjects } from './lib/store'
-import { runBoundedEvaluation, DEFAULT_MODEL } from './lib/ollama'
+import { runDeterministicEvaluation as runBoundedEvaluation, DEFAULT_MODEL } from './lib/reasoningEngine'
 import Landing from './pages/Landing'
 import Dashboard, { Shell } from './pages/Dashboard'
 import Wizard, { EMPTY } from './pages/Wizard'
-import ThinkingPartner from './pages/ThinkingPartner'
-import Discovery from './pages/Discovery'
 import AnalysisPage from './pages/Analysis'
 import OverallVerdictPage from './pages/Verdict'
 import AuthModal from './components/AuthModal'
@@ -121,8 +119,8 @@ export default function App() {
           interviews: existingInterviews,
           trackedAssumptions: existingAssumptions.length > 0
             ? existingAssumptions
-            : (analysis.assumptionAnalysis || []).map((a, idx) => ({
-                id: `assump-${idx + 1}`,
+            : (analysis.assumptionAnalysis || []).map(a => ({
+                id: crypto.randomUUID(),
                 assumption: a.assumption,
                 category: 'Problem' as const,
                 state: 'Untested' as const,
@@ -197,8 +195,6 @@ export default function App() {
               go({ page: 'dashboard' })
             }
           }}
-          onStartChat={() => go({ page: 'chat' })}
-          onStartDiscover={() => go({ page: 'discover' })}
         />
         <AuthModal
           isOpen={authOpen}
@@ -234,46 +230,6 @@ export default function App() {
             onUpdateStatus={updateStatus}
             onDelete={remove}
             storageError={storageError}
-          />
-        )}
-
-        {route.page === 'discover' && (
-          <Discovery
-            go={go}
-            initialSelectedId={route.selectedId}
-            onStartEvaluation={(formPatch, evaluateImmediately) => {
-              const fullForm = {
-                ...EMPTY,
-                ...formPatch,
-                name: formPatch.name || 'New Opportunity',
-                description: formPatch.description || formPatch.problem || '',
-                problem: formPatch.problem || '',
-              }
-              save(fullForm, !!evaluateImmediately)
-            }}
-          />
-        )}
-
-        {route.page === 'chat' && (
-          <ThinkingPartner
-            go={go}
-            initialTopic={route.initialTopic}
-            onStartEvaluation={seed => {
-              if (seed?.trim()) {
-                const derivedName = seed.split('.')[0].slice(0, 40).trim() || 'New Idea'
-                save(
-                  {
-                    ...EMPTY,
-                    name: derivedName,
-                    description: seed.trim(),
-                    problem: seed.trim(),
-                  },
-                  true
-                )
-              } else {
-                go({ page: 'new' })
-              }
-            }}
           />
         )}
 
