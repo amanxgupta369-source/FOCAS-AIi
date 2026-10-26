@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd focas-ai369 && npm install && npm run build",
-  "outputDirectory": "focas-ai369/dist",
-  "framework": "vite"
+"buildCommand": "npm run build",
+"outputDirectory": "dist",
+"framework": "vite"
 }
