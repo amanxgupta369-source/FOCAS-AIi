@@ -216,11 +216,11 @@ export default function AuthModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-dusk-ink/50 p-4 backdrop-blur-sm animate-fade-in">
-      <div className="glass-solid relative w-full max-w-md rounded-3xl p-6 md:p-8 shadow-2xl border border-white/30 text-dusk-ink max-h-[92vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-dusk-ink/50 p-3 sm:p-4 backdrop-blur-sm animate-fade-in">
+      <div className="glass-solid relative w-full max-w-[calc(100vw-1.5rem)] sm:max-w-md rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-2xl border border-white/60 text-dusk-ink max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
-          className="absolute right-5 top-5 rounded-full p-1.5 text-dusk-mute hover:bg-white/20 hover:text-dusk-ink transition"
+          className="absolute right-3 top-3 sm:right-5 sm:top-5 rounded-full p-2.5 text-dusk-mute hover:bg-white/20 hover:text-dusk-ink transition min-w-[44px] min-h-[44px] flex items-center justify-center active:scale-95"
           aria-label="Close"
         >
           <X size={18} />
@@ -311,7 +311,7 @@ export default function AuthModal({
               <div>
                 <label className="block text-xs font-medium mb-1 text-dusk-deep">Account Email Address</label>
                 <div className="relative">
-                  <Mail size={15} className="absolute left-3 top-3 text-dusk-mute" />
+                  <Mail size={15} className="absolute left-3 top-3.5 text-dusk-mute" />
                   <input
                     type="email"
                     required
@@ -321,7 +321,7 @@ export default function AuthModal({
                       setEmail(e.target.value)
                       if (errorMsg) clearFeedback()
                     }}
-                    className="input pl-9 text-xs w-full"
+                    className="input pl-9 text-base sm:text-xs w-full min-h-[44px]"
                   />
                 </div>
               </div>
@@ -329,7 +329,7 @@ export default function AuthModal({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full btn-primary text-xs py-2.5 flex items-center justify-center gap-2"
+                className="w-full btn-primary text-xs sm:text-sm py-2.5 min-h-[44px] flex items-center justify-center gap-2 active:scale-98"
               >
                 {loading ? 'Sending Recovery Link...' : 'Send Password Reset Link'}
               </button>
@@ -372,7 +372,7 @@ export default function AuthModal({
                 }}
                 className={`flex-1 rounded-lg py-1.5 transition ${
                   tab === 'signin'
-                    ? 'bg-white shadow text-dusk-ink font-semibold'
+                    ? 'bg-white/70 shadow-xs text-dusk-ink font-bold'
                     : 'text-dusk-mute hover:text-dusk-ink'
                 }`}
               >
@@ -386,7 +386,7 @@ export default function AuthModal({
                 }}
                 className={`flex-1 rounded-lg py-1.5 transition ${
                   tab === 'signup'
-                    ? 'bg-white shadow text-dusk-ink font-semibold'
+                    ? 'bg-white/70 shadow-xs text-dusk-ink font-bold'
                     : 'text-dusk-mute hover:text-dusk-ink'
                 }`}
               >
@@ -424,7 +424,7 @@ export default function AuthModal({
               <div>
                 <label className="block text-xs font-medium mb-1 text-dusk-deep">Email Address</label>
                 <div className="relative">
-                  <Mail size={15} className="absolute left-3 top-3 text-dusk-mute" />
+                  <Mail size={15} className="absolute left-3 top-3.5 text-dusk-mute" />
                   <input
                     type="email"
                     required
@@ -434,7 +434,7 @@ export default function AuthModal({
                       setEmail(e.target.value)
                       if (errorMsg) clearFeedback()
                     }}
-                    className="input pl-9 text-xs w-full"
+                    className="input pl-9 text-base sm:text-xs w-full min-h-[44px]"
                   />
                 </div>
               </div>
@@ -449,14 +449,14 @@ export default function AuthModal({
                         setForgotPasswordMode(true)
                         clearFeedback()
                       }}
-                      className="text-[11px] text-dusk-mute hover:text-dusk-ink underline"
+                      className="text-[11px] text-dusk-mute hover:text-dusk-ink underline py-1"
                     >
                       Forgot password?
                     </button>
                   )}
                 </div>
                 <div className="relative">
-                  <Lock size={15} className="absolute left-3 top-3 text-dusk-mute" />
+                  <Lock size={15} className="absolute left-3 top-3.5 text-dusk-mute" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
@@ -467,15 +467,15 @@ export default function AuthModal({
                       setPassword(e.target.value)
                       if (errorMsg) clearFeedback()
                     }}
-                    className="input pl-9 pr-9 text-xs w-full"
+                    className="input pl-9 pr-12 text-base sm:text-xs w-full min-h-[44px]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-dusk-mute hover:text-dusk-ink transition"
+                    className="absolute right-1 top-1 bottom-1 w-10 flex items-center justify-center text-dusk-mute hover:text-dusk-ink transition active:scale-95 rounded-lg"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
                 {tab === 'signup' && (
@@ -490,7 +490,7 @@ export default function AuthModal({
                 <div>
                   <label className="block text-xs font-medium mb-1 text-dusk-deep">Confirm Password</label>
                   <div className="relative">
-                    <Lock size={15} className="absolute left-3 top-3 text-dusk-mute" />
+                    <Lock size={15} className="absolute left-3 top-3.5 text-dusk-mute" />
                     <input
                       type={showConfirmPassword ? 'text' : 'password'}
                       required
@@ -501,15 +501,15 @@ export default function AuthModal({
                         setConfirmPassword(e.target.value)
                         if (errorMsg) clearFeedback()
                       }}
-                      className="input pl-9 pr-9 text-xs w-full"
+                      className="input pl-9 pr-12 text-base sm:text-xs w-full min-h-[44px]"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-3 text-dusk-mute hover:text-dusk-ink transition"
+                      className="absolute right-1 top-1 bottom-1 w-10 flex items-center justify-center text-dusk-mute hover:text-dusk-ink transition active:scale-95 rounded-lg"
                       aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                     >
-                      {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
                 </div>
@@ -518,7 +518,7 @@ export default function AuthModal({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full btn-primary text-xs py-2.5 flex items-center justify-center gap-2 mt-2"
+                className="w-full btn-primary text-xs sm:text-sm py-3 sm:py-2.5 min-h-[44px] flex items-center justify-center gap-2 mt-2"
               >
                 {loading ? (
                   tab === 'signin' ? 'Signing in...' : 'Creating account...'

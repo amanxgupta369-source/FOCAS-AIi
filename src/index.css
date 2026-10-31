@@ -1,46 +1,460 @@
-@tailwind base; @tailwind components; @tailwind utilities;
-body { @apply font-sans text-dusk-ink antialiased min-h-screen;
-  background:
-    radial-gradient(ellipse 800px 500px at 15% -5%, rgba(255,255,255,0.35), transparent 60%),
-    radial-gradient(ellipse 600px 400px at 90% 10%, rgba(169,205,232,0.4), transparent 55%),
-    radial-gradient(ellipse 500px 350px at 40% 95%, rgba(220,234,245,0.3), transparent 50%),
-    linear-gradient(160deg, #DCEAF5 0%, #B5D1E8 25%, #8BAAC8 50%, #6D8EAF 75%, #536F91 100%);
-  background-attachment: fixed; }
-@layer components {
-  .glass { @apply rounded-2xl;
-    background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.22);
-    backdrop-filter: blur(24px) saturate(1.2); -webkit-backdrop-filter: blur(24px) saturate(1.2);
-    box-shadow: 0 8px 32px rgba(38,54,74,0.08), inset 0 1px 0 rgba(255,255,255,0.16); }
-  .glass-solid { @apply rounded-2xl;
-    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.28);
-    backdrop-filter: blur(28px) saturate(1.2); -webkit-backdrop-filter: blur(28px) saturate(1.2);
-    box-shadow: 0 8px 32px rgba(38,54,74,0.1), inset 0 1px 0 rgba(255,255,255,0.2); }
-  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium disabled:opacity-50 min-h-[44px];
-    transition: all 0.2s cubic-bezier(0.16,1,0.3,1); }
-  .btn-primary { @apply btn text-white; background: #536F91;
-    box-shadow: 0 2px 12px rgba(83,111,145,0.3); }
-  .btn-primary:hover:not(:disabled) { background: #3D5574; transform: translateY(-1px);
-    box-shadow: 0 4px 20px rgba(83,111,145,0.35); }
-  .btn-primary:active:not(:disabled) { transform: translateY(0); }
-  .btn-ghost { @apply btn text-dusk-ink;
-    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); }
-  .btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,0.24); border-color: rgba(255,255,255,0.32); }
-  .input { @apply w-full rounded-xl px-4 py-3 text-sm; color: #26364A;
-    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
-    transition: all 0.2s ease; }
-  .input::placeholder { color: rgba(115,131,152,0.6); }
-  .input:focus { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.38);
-    outline: none; box-shadow: 0 0 0 3px rgba(83,111,145,0.12); }
-  .chip { @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-medium text-dusk-deep;
-    background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.2); }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --pale-ice: #dceaf5;
+  --soft-sky: #b5d1e8;
+  --muted-steel: #8baac8;
+  --heading-text: #26364a;
+  --secondary-text: #738398;
+  --primary-button: #536f91;
+  --dark-button: #1e293b;
+  --glass-fill: rgba(255, 255, 255, 0.22);
+  --glass-border: rgba(255, 255, 255, 0.32);
 }
-*:focus-visible { outline: 2px solid rgba(83,111,145,0.4); outline-offset: 2px; }
-@keyframes rise { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: none } }
-.rise { animation: rise .45s cubic-bezier(0.16,1,0.3,1) both; }
-@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-.fade-in { animation: fadeIn .25s ease both; }
-@keyframes pulse-gentle { 0%,100% { opacity: 0.3; transform: scale(1) } 50% { opacity: 0.6; transform: scale(1.1) } }
-.analyzing-pulse { animation: pulse-gentle 2s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
-@media print { aside, nav, .no-print { display: none !important; } body { background: #fff; }
-  .glass, .glass-solid { box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(255,255,255,0.9); } }
+
+html {
+  min-height: 100%;
+  background:
+    radial-gradient(ellipse 800px 500px at 15% -5%, rgba(255, 255, 255, 0.35), transparent 60%),
+    radial-gradient(ellipse 600px 400px at 90% 10%, rgba(169, 205, 232, 0.4), transparent 55%),
+    radial-gradient(ellipse 500px 350px at 40% 95%, rgba(220, 234, 245, 0.3), transparent 50%),
+    linear-gradient(160deg, #dceaf5, #b5d1e8, #8baac8, #6d8eaf, #536f91) !important;
+  background-attachment: fixed !important;
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+  color: #26364a;
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  @apply font-sans antialiased min-h-screen;
+  background: transparent !important;
+  color: #26364a;
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  background: transparent !important;
+  color: #26364a;
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+}
+
+@layer components {
+  /* Real Frosted Liquid Glass - Authentic Original Atmosphere */
+  .glass {
+    background: rgba(255, 255, 255, 0.22) !important;
+    backdrop-filter: blur(24px) saturate(1.2) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(1.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.32) !important;
+    border-radius: 20px !important;
+    box-shadow:
+      0 8px 32px 0 rgba(38, 54, 74, 0.08),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.4) !important;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .glass:hover {
+    background: rgba(255, 255, 255, 0.32) !important;
+    border-color: rgba(255, 255, 255, 0.55) !important;
+    box-shadow:
+      0 12px 36px 0 rgba(38, 54, 74, 0.12),
+      inset 0 1px 2px 0 rgba(255, 255, 255, 0.5) !important;
+  }
+
+  /* Frosted Glass for Sidebars, Modals & Floating Drawers */
+  .glass-solid {
+    background: rgba(255, 255, 255, 0.28) !important;
+    backdrop-filter: blur(28px) saturate(1.2) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(1.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.38) !important;
+    border-radius: 20px !important;
+    box-shadow:
+      0 10px 36px 0 rgba(38, 54, 74, 0.10),
+      inset 0 1px 2px 0 rgba(255, 255, 255, 0.45) !important;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Deep Liquid Glass card for dominant hero / next best action */
+  .glass-deep {
+    background: linear-gradient(135deg, rgba(38, 54, 74, 0.95) 0%, rgba(53, 75, 102, 0.92) 50%, rgba(83, 111, 145, 0.9) 100%) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(181, 209, 232, 0.35) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.5) !important;
+    box-shadow:
+      0 16px 40px -10px rgba(38, 54, 74, 0.35),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.25) !important;
+    border-radius: 20px !important;
+    color: #ffffff !important;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold disabled:opacity-50 min-h-[44px];
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Primary Button: Original #536f91 */
+  .btn-primary {
+    @apply btn text-white;
+    background: #536f91 !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+    box-shadow:
+      0 2px 12px 0 rgba(83, 111, 145, 0.35),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.25) !important;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: #3d5574 !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    box-shadow:
+      0 4px 20px 0 rgba(83, 111, 145, 0.45),
+      inset 0 1px 2px 0 rgba(255, 255, 255, 0.35) !important;
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  /* Dark Button: Original #1e293b / #26364a */
+  .btn-dark {
+    @apply btn text-white;
+    background: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 4px 14px 0 rgba(30, 41, 59, 0.25) !important;
+  }
+
+  .btn-dark:hover:not(:disabled) {
+    background: #0f172a !important;
+    transform: translateY(-1px);
+  }
+
+  /* Liquid Glass Frosted Button */
+  .btn-ghost {
+    @apply btn;
+    color: #26364a !important;
+    background: rgba(255, 255, 255, 0.25) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+    box-shadow: 0 2px 8px 0 rgba(38, 54, 74, 0.04) !important;
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.45) !important;
+    border-color: rgba(255, 255, 255, 0.6) !important;
+    box-shadow: 0 4px 14px 0 rgba(38, 54, 74, 0.08) !important;
+  }
+
+  /* Soft Sky Blue Pill Button */
+  .btn-sky {
+    @apply btn;
+    color: #26364a !important;
+    background: rgba(181, 209, 232, 0.4) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border: 1px solid rgba(139, 170, 200, 0.5) !important;
+  }
+
+  .btn-sky:hover:not(:disabled) {
+    background: rgba(181, 209, 232, 0.65) !important;
+  }
+
+  /* Translucent Frosted Input Fields: 16px on mobile prevents iOS auto-zoom */
+  .input {
+    @apply w-full rounded-xl px-3.5 py-2.5 min-h-[44px];
+    font-size: 16px !important;
+    color: #26364a !important;
+    background: rgba(255, 255, 255, 0.35) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.45) !important;
+    box-shadow: inset 0 1px 2px 0 rgba(38, 54, 74, 0.04) !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.2s ease;
+  }
+
+  @media (min-width: 640px) {
+    .input {
+      font-size: 0.875rem !important;
+    }
+  }
+
+  .input::placeholder {
+    color: #738398 !important;
+  }
+
+  .input:focus {
+    background: rgba(255, 255, 255, 0.55) !important;
+    border-color: #536f91 !important;
+    box-shadow: 0 0 0 3px rgba(83, 111, 145, 0.2) !important;
+    outline: none;
+  }
+
+  .chip {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold;
+    color: #536f91;
+    background: rgba(255, 255, 255, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(8px);
+    touch-action: manipulation;
+  }
+
+  /* Touch Target Helper: 44px minimum */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Mobile Bottom Navigation Bar - Safe Area & Blur */
+  .mobile-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 45;
+    background: rgba(220, 234, 245, 0.94) !important;
+    backdrop-filter: blur(24px) saturate(1.3) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(1.3) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.75) !important;
+    box-shadow: 0 -4px 24px 0 rgba(38, 54, 74, 0.12) !important;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.35rem);
+  }
+}
+
+/* ========================================================================
+   FOCAS BLUE ATMOSPHERE OVERRIDES
+   Convert opaque Tailwind utility backgrounds to translucent versions
+   so the ice-blue-to-steel-blue gradient is visible throughout the UI.
+   ======================================================================== */
+
+/* --- Global: force ALL bg-slate-50/100/200 inside glass containers to be translucent --- */
+.glass .bg-slate-50,
+.glass .bg-slate-100,
+.glass .bg-slate-200,
+.glass-solid .bg-slate-50,
+.glass-solid .bg-slate-100,
+.glass-solid .bg-slate-200 {
+  background-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+/* Hover variants inside glass */
+.glass .hover\:bg-slate-100:hover,
+.glass-solid .hover\:bg-slate-100:hover {
+  background-color: rgba(255, 255, 255, 0.55) !important;
+}
+
+/* --- Standalone bg-slate-50/100 not inside glass (fallback for modals, empty states) --- */
+div.bg-slate-50,
+div.bg-slate-100 {
+  background-color: rgba(255, 255, 255, 0.35) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* --- Opaque border-slate-* inside glass → translucent --- */
+.glass .border-slate-100,
+.glass .border-slate-200,
+.glass-solid .border-slate-100,
+.glass-solid .border-slate-200,
+.glass .border-b.border-slate-100,
+.glass .border-b.border-slate-200,
+.glass-solid .border-b.border-slate-100 {
+  border-color: rgba(255, 255, 255, 0.45) !important;
+}
+
+div.border-slate-200,
+div.border-slate-100 {
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* --- Sidebar internal dividers --- */
+.glass-solid .border-t.border-slate-200 {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* --- Inputs inside glass: translucent bg-slate-50 inputs --- */
+.glass input.bg-slate-50,
+.glass-solid input.bg-slate-50,
+.glass textarea.bg-slate-50,
+.glass-solid textarea.bg-slate-50 {
+  background-color: rgba(255, 255, 255, 0.45) !important;
+  border-color: rgba(125, 159, 185, 0.4) !important;
+}
+
+/* --- Select elements inside glass --- */
+.glass select.bg-white\/50,
+.glass-solid select,
+select.bg-white\/50 {
+  background-color: rgba(255, 255, 255, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* --- Sidebar nav button hover states: use translucent instead of opaque --- */
+.glass-solid .hover\:bg-slate-100:hover {
+  background-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* --- Active sidebar buttons (bg-slate-900): keep dark but with subtle transparency --- */
+.glass-solid .bg-slate-900 {
+  background-color: rgba(17, 24, 39, 0.92) !important;
+}
+
+/* --- Status badges: translucent versions of opaque pill backgrounds --- */
+.bg-slate-100.text-slate-700,
+.bg-slate-100.text-slate-500,
+span.bg-slate-100 {
+  background-color: rgba(255, 255, 255, 0.4) !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+}
+
+/* Colored status badges should stay slightly opaque for readability */
+.bg-emerald-50,
+.bg-emerald-100 {
+  background-color: rgba(209, 250, 229, 0.65) !important;
+}
+.bg-blue-50,
+.bg-blue-100 {
+  background-color: rgba(219, 234, 254, 0.65) !important;
+}
+.bg-amber-50,
+.bg-amber-100 {
+  background-color: rgba(254, 243, 199, 0.65) !important;
+}
+.bg-rose-50,
+.bg-rose-100 {
+  background-color: rgba(255, 228, 230, 0.65) !important;
+}
+.bg-sky-100\/70 {
+  background-color: rgba(224, 242, 254, 0.55) !important;
+}
+
+/* --- Delete confirmation and toast banners: stay visible but softer --- */
+.bg-rose-50.border-rose-300 {
+  background-color: rgba(255, 228, 230, 0.75) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* --- Mobile bottom navigation --- */
+/* (already handled via .mobile-bottom-nav in @layer) */
+
+/* --- Rename/inline action panel buttons --- */
+.glass .bg-slate-200.text-slate-700,
+.glass-solid .bg-slate-200.text-slate-700 {
+  background-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* --- Mobile header border --- */
+.border-b.border-slate-200\/60 {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* --- Ensure no stray backgrounds cover the gradient on major containers --- */
+main {
+  background: transparent !important;
+}
+
+/* Mobile responsive refinements for smooth 60fps scrolling and comfortable radii */
+@media (max-width: 640px) {
+  .glass {
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-radius: 18px !important;
+  }
+  .glass-solid {
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border-radius: 18px !important;
+  }
+}
+
+/* Tabular numerals for financial metrics and scores */
+.font-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+*:focus-visible {
+  outline: 2px solid #5B7E98;
+  outline-offset: 2px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise {
+  animation: rise 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.2s ease both;
+}
+
+/* Scrollbar hiding utilities for mobile pills */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Momentum scrolling for iOS */
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Horizontal scroll container with fade indicators */
+.scroll-indicator-mask {
+  mask-image: linear-gradient(to right, transparent, black 16px, black calc(100% - 16px), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 16px, black calc(100% - 16px), transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media print {
+  aside, nav, .mobile-bottom-nav, .no-print {
+    display: none !important;
+  }
+  body {
+    background: #ffffff !important;
+  }
+  .glass, .glass-solid {
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+  }
+}

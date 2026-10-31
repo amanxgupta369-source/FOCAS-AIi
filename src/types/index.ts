@@ -355,6 +355,75 @@ export interface EvaluationVersion {
   modelUsed?: string
 }
 
+export type SprintTaskStatus = 'Pending' | 'In Progress' | 'Completed' | 'Skipped'
+
+export interface ValidationSprintTask {
+  id: string
+  stepNumber: number
+  title: string
+  description: string
+  outcome: string
+  status: SprintTaskStatus
+  estimatedEffort: string
+  dueDate?: string
+  targetMetric?: string
+  scriptTemplate?: string
+  actionType?: 'interview' | 'assumption' | 'precommitment' | 'concierge' | 'recalculate' | 'decision'
+}
+
+export interface ValidationSprint {
+  id: string
+  title: string
+  startedAt: string
+  targetDays: number
+  status: 'Active' | 'Completed' | 'Paused'
+  tasks: ValidationSprintTask[]
+}
+
+export type TimelineEntryType =
+  | 'evaluation'
+  | 'interview_logged'
+  | 'assumption_tested'
+  | 'sprint_started'
+  | 'task_completed'
+  | 'recalculation'
+  | 'founder_decision'
+  | 'note'
+
+export interface ProjectTimelineEntry {
+  id: string
+  timestamp: string
+  type: TimelineEntryType
+  title: string
+  description: string
+  scoreDelta?: { before: number; after: number }
+  verdictDelta?: { before: string; after: string }
+  badge?: string
+}
+
+export interface RecalculationDelta {
+  timestamp: string
+  scoreBefore: number
+  scoreAfter: number
+  verdictBefore: string
+  verdictAfter: string
+  problemEvidenceBefore: string
+  problemEvidenceAfter: string
+  willingnessToPayBefore: string
+  willingnessToPayAfter: string
+  plainEnglishExplanation: string
+  affectedAssumptions: string[]
+  newNextBestAction: string
+}
+
+export interface FounderReminderPreferences {
+  enabled: boolean
+  frequency: 'weekly' | 'biweekly' | 'off'
+  quietHours: boolean
+  weeklyGoalInterviews: number
+  lastReviewDate?: string
+}
+
 export interface Project {
   id: string
   form: IdeaForm
@@ -371,6 +440,12 @@ export interface Project {
   trackedAssumptions?: TrackedAssumption[]
   history?: EvaluationVersion[]
   chatHistory?: ChatMessage[]
+  sprint?: ValidationSprint
+  timeline?: ProjectTimelineEntry[]
+  lastRecalculationDelta?: RecalculationDelta
+  reminderPreferences?: FounderReminderPreferences
+  inferredCustomer?: string
+  inferredProblem?: string
 }
 
 export type DiscoveryCategory =
@@ -415,8 +490,11 @@ export interface DiscoveryOpportunity {
   isHypothesis: true
 }
 
+export type ProjectSubView = 'today' | 'report' | 'sprint' | 'evidence' | 'timeline'
+
 export type Route =
-  | { page: 'landing' | 'dashboard' }
+  | { page: 'landing' | 'dashboard' | 'projects' | 'activity' }
   | { page: 'new'; editId?: string; seed?: string }
-  | { page: 'project'; id: string }
+  | { page: 'project'; id: string; view?: ProjectSubView }
   | { page: 'verdict'; id: string }
+

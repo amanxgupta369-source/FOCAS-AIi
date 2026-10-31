@@ -101,22 +101,21 @@ export default function OverallVerdictPage({
   const theme = getVerdictTheme(v.decision)
 
   return (
-    <div className="rise space-y-6 max-w-5xl mx-auto pb-16">
+    <div className="rise space-y-4 sm:space-y-6 max-w-5xl mx-auto px-2.5 sm:px-4 pb-28 md:pb-16">
       {/* Top Navigation & Action Header */}
-      <Glass className="p-5 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <Glass className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3 rounded-2xl sm:rounded-3xl">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
           <button
-            onClick={() => go({ page: 'project', id: project.id })}
-            className="btn-ghost text-xs flex items-center gap-1.5 px-3 py-1.5"
-            title="Return to Detailed 12-Section Evaluation"
+            onClick={() => go({ page: 'project', id: project.id, view: 'today' })}
+            className="btn-ghost text-xs flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl self-start min-h-[44px] active:scale-95"
+            title="Return to Today Workspace"
           >
-            <ArrowLeft size={14} /> Back to Evaluation
+            <ArrowLeft size={14} /> Back to Today
           </button>
-          <div className="h-4 w-px bg-white/20 hidden sm:block" />
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-dusk-ink flex items-center gap-2">
-                <Compass className="text-dusk-deep shrink-0" size={22} />
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-dusk-ink flex items-center gap-2">
+                <Compass className="text-dusk-deep shrink-0" size={20} />
                 OVERALL VERDICT
               </h1>
               {project.evaluationType === 'basic' || a.evaluationType === 'basic' ? (
@@ -136,19 +135,19 @@ export default function OverallVerdictPage({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 pt-1 md:pt-0">
           <button
             onClick={() => window.print()}
-            className="btn-ghost text-xs flex items-center gap-1.5 px-3 py-1.5"
+            className="btn-ghost text-xs flex items-center gap-1.5 px-3 py-2 rounded-xl min-h-[44px] active:scale-95"
             title="Print or Save Verdict as PDF"
           >
             <Printer size={14} /> Export / Print
           </button>
           <button
-            onClick={() => go({ page: 'project', id: project.id })}
-            className="btn-primary text-xs flex items-center gap-1.5 px-3.5 py-1.5"
+            onClick={() => go({ page: 'project', id: project.id, view: 'report' })}
+            className="btn-primary text-xs flex items-center gap-1.5 px-3.5 py-2 font-semibold rounded-xl min-h-[44px] active:scale-95 shadow-sm"
           >
-            <FileText size={14} /> View Detailed Analysis
+            <FileText size={14} /> View 12-Section Report
           </button>
         </div>
       </Glass>
@@ -702,14 +701,14 @@ export default function OverallVerdictPage({
                     <button
                       type="button"
                       onClick={() => toggleStep(action.rank)}
-                      className={`h-6 w-6 rounded-full border flex items-center justify-center transition shrink-0 ${
+                      className={`h-8 w-8 rounded-xl border flex items-center justify-center transition shrink-0 min-w-[32px] min-h-[32px] active:scale-90 ${
                         isDone
-                          ? 'bg-emerald-600 border-emerald-600 text-white'
+                          ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
                           : 'border-dusk-mute/60 hover:border-dusk-deep'
                       }`}
                       aria-label="Toggle completed"
                     >
-                      {isDone ? <CheckCircle2 size={16} /> : <span className="text-xs">{action.rank}</span>}
+                      {isDone ? <CheckCircle2 size={18} /> : <span className="text-xs font-bold">{action.rank}</span>}
                     </button>
                     <div>
                       <h4

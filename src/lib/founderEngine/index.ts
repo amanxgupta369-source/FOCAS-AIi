@@ -96,6 +96,18 @@ export function evaluateStartupIdea(
     trackedAssumptions.length > 0
       ? trackedAssumptions
       : [
+          ...(understood.isCustomerAssumed
+            ? [
+                {
+                  id: 'assump-cust',
+                  assumption: `Target customer is confirmed as ${understood.cleanCustomer} (Preliminary system assumption from idea description).`,
+                  category: 'Customer' as const,
+                  state: 'Untested' as const,
+                  evidenceNotes: 'Target customer role unverified; requires 5 discovery calls.',
+                  lastUpdated: new Date().toISOString(),
+                },
+              ]
+            : []),
           {
             id: 'assump-1',
             assumption: `${understood.cleanCustomer || 'Target customers'} experience this problem frequently enough to pay to eliminate it.`,

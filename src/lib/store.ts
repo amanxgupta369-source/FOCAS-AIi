@@ -85,6 +85,10 @@ function loadInitialProjects(): Project[] {
             chatHistory: Array.isArray(p.chatHistory) ? p.chatHistory : [],
             interviews: Array.isArray(p.interviews) ? p.interviews : [],
             trackedAssumptions: Array.isArray(p.trackedAssumptions) ? p.trackedAssumptions : [],
+            sprint: p.sprint && typeof p.sprint === 'object' ? p.sprint : undefined,
+            timeline: Array.isArray(p.timeline) ? p.timeline : [],
+            reminderPreferences: p.reminderPreferences && typeof p.reminderPreferences === 'object' ? p.reminderPreferences : undefined,
+            lastRecalculationDelta: p.lastRecalculationDelta && typeof p.lastRecalculationDelta === 'object' ? p.lastRecalculationDelta : undefined,
             updated: typeof p.updated === 'string' ? p.updated : new Date().toISOString(),
           }))
 

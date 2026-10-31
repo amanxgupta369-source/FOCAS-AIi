@@ -203,25 +203,32 @@ export async function fetchProjectsFromCloud(userId: string): Promise<Project[]>
     chatByProject.set(item.project_id, list)
   }
 
-  return (data || []).map(row => ({
-    id: row.id,
-    form: {
-      ...row.form,
-      name: row.name || row.form?.name || 'Untitled Project',
-      description: row.description || row.form?.description || '',
-    },
-    status: (row.status as Status) || 'Evaluating',
-    updated: row.updated_at,
-    analysis: row.analysis || undefined,
-    modelUsed: row.model_used || undefined,
-    evaluationType: row.evaluation_type || undefined,
-    isQuotaExceeded: row.is_quota_exceeded || false,
-    error: row.error || undefined,
-    interviews: interviewsByProject.get(row.id) || [],
-    trackedAssumptions: assumptionsByProject.get(row.id) || [],
-    history: historyByProject.get(row.id) || [],
-    chatHistory: chatByProject.get(row.id) || [],
-  }))
+  return (data || []).map(row => {
+    const ws = (row.form as any)?._workspaceState
+    return {
+      id: row.id,
+      form: {
+        ...row.form,
+        name: row.name || row.form?.name || 'Untitled Project',
+        description: row.description || row.form?.description || '',
+      },
+      status: (row.status as Status) || 'Evaluating',
+      updated: row.updated_at,
+      analysis: row.analysis || undefined,
+      modelUsed: row.model_used || undefined,
+      evaluationType: row.evaluation_type || undefined,
+      isQuotaExceeded: row.is_quota_exceeded || false,
+      error: row.error || undefined,
+      interviews: interviewsByProject.get(row.id) || [],
+      trackedAssumptions: assumptionsByProject.get(row.id) || [],
+      history: historyByProject.get(row.id) || [],
+      chatHistory: chatByProject.get(row.id) || [],
+      sprint: ws?.sprint,
+      timeline: ws?.timeline || [],
+      reminderPreferences: ws?.reminderPreferences,
+      lastRecalculationDelta: ws?.lastRecalculationDelta,
+    }
+  })
 }
 
 export async function upsertProjectToCloud(project: Project, userId: string): Promise<void> {
@@ -233,10 +240,18 @@ export async function upsertProjectToCloud(project: Project, userId: string): Pr
     name: project.form.name || 'Untitled Project',
     description: project.form.description || '',
     status: project.status,
-    form: project.form,
+    form: {
+      ...project.form,
+      _workspaceState: {
+        sprint: project.sprint,
+        timeline: project.timeline,
+        reminderPreferences: project.reminderPreferences,
+        lastRecalculationDelta: project.lastRecalculationDelta,
+      },
+    },
     analysis: project.analysis || null,
     model_used: project.modelUsed || null,
-    evaluation_type: project.evaluationType || 'ai',
+    evaluation_type: project.evaluationType || 'basic',
     is_quota_exceeded: project.isQuotaExceeded || false,
     error: project.error || null,
     updated_at: new Date().toISOString(),

@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   Lightbulb,
   ArrowRight,
+  ArrowLeft,
   Target,
   ListTodo,
   ExternalLink,
@@ -172,6 +173,7 @@ export default function AnalysisPage({
   onReevaluate,
   onCancelAnalysis,
   onViewVerdict,
+  onBackToToday,
 }: {
   project: Project
   progress?: EvaluationProgress | null
@@ -181,6 +183,7 @@ export default function AnalysisPage({
   onReevaluate?: () => void
   onCancelAnalysis?: () => void
   onViewVerdict?: () => void
+  onBackToToday?: () => void
 }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>('Executive Report')
   const { form: f, analysis: a } = project
@@ -343,9 +346,9 @@ export default function AnalysisPage({
   }
 
   return (
-    <div className="rise space-y-4">
+    <div className="rise space-y-4 pb-28 md:pb-12 max-w-5xl mx-auto px-2 sm:px-4">
       {/* Header Bar */}
-      <Glass className="flex flex-wrap items-start justify-between gap-3 p-5">
+      <Glass className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 sm:p-5 rounded-2xl sm:rounded-3xl">
         <div>
           <h1 className="text-2xl font-semibold">{f.name}</h1>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-dusk-mute">
@@ -390,10 +393,19 @@ export default function AnalysisPage({
             {project.sample && <Demo />}
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          {onBackToToday && (
+            <button
+              className="btn-ghost flex items-center gap-1.5 text-xs font-semibold py-2 px-3 rounded-xl min-h-[40px] active:scale-95"
+              onClick={onBackToToday}
+              title="Return to Today Workspace"
+            >
+              <ArrowLeft size={14} /> Back to Today
+            </button>
+          )}
           {onViewVerdict && a && (
             <button
-              className="btn-primary flex items-center gap-1.5 shadow-sm"
+              className="btn-primary flex items-center gap-1.5 shadow-sm text-xs py-2 px-3.5 font-bold rounded-xl min-h-[40px] active:scale-95"
               onClick={onViewVerdict}
               title="View Overall Verdict final recommendation"
             >
@@ -401,14 +413,14 @@ export default function AnalysisPage({
             </button>
           )}
           {onReevaluate && (
-            <button className="btn-ghost flex items-center gap-1.5" onClick={onReevaluate} title="Recalculate with Founder Intelligence Engine">
+            <button className="btn-ghost flex items-center gap-1.5 text-xs py-2 px-3 rounded-xl min-h-[40px] active:scale-95" onClick={onReevaluate} title="Recalculate with Founder Intelligence Engine">
               <RefreshCw size={14} /> Recalculate
             </button>
           )}
-          <button className="btn-ghost flex items-center gap-1.5" onClick={onEdit}>
+          <button className="btn-ghost flex items-center gap-1.5 text-xs py-2 px-3 rounded-xl min-h-[40px] active:scale-95" onClick={onEdit}>
             <Pencil size={14} /> Edit
           </button>
-          <button className="btn-ghost text-rose-800 flex items-center gap-1.5" onClick={onDelete}>
+          <button className="btn-ghost text-rose-800 flex items-center gap-1.5 text-xs py-2 px-3 rounded-xl min-h-[40px] active:scale-95" onClick={onDelete}>
             <Trash2 size={14} /> Delete
           </button>
         </div>
@@ -424,8 +436,8 @@ export default function AnalysisPage({
             <div>
               <h3 className="font-semibold text-sm text-dusk-ink flex items-center gap-2">
                 <span>Deterministic Founder Intelligence Report</span>
-                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">
-                  Zero AI Hallucinations
+                <span className="text-[10px] bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded-full font-bold">
+                  Deterministic Framework-Based Analysis
                 </span>
               </h3>
               <p className="text-xs text-dusk-mute mt-0.5">
@@ -506,16 +518,31 @@ export default function AnalysisPage({
         </Glass>
       ) : (
         <div className="space-y-4">
-          {/* Tabs */}
-          <div role="tablist" className="glass flex overflow-x-auto gap-1.5 p-1.5 no-scrollbar">
+          {/* Mobile Quick Section Selector */}
+          <div className="md:hidden glass p-2.5 rounded-2xl flex items-center justify-between gap-2.5">
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider pl-1 shrink-0">Section:</span>
+            <select
+              aria-label="Select report section"
+              value={tab}
+              onChange={e => setTab(e.target.value as any)}
+              className="input text-base sm:text-xs min-h-[44px] py-1.5 font-bold text-slate-900 bg-white/60 border-white/70 flex-1 cursor-pointer rounded-xl"
+            >
+              {TABS.map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Desktop & Mobile Scrollable Tab Pills */}
+          <div role="tablist" className="glass flex overflow-x-auto gap-1.5 p-1.5 scrollbar-none touch-scroll scroll-indicator-mask">
             {TABS.map(t => (
               <button
                 key={t}
                 role="tab"
                 aria-selected={tab === t}
                 onClick={() => setTab(t)}
-                className={`whitespace-nowrap rounded-xl px-3.5 py-2 text-xs sm:text-sm font-medium transition shrink-0 ${
-                  tab === t ? 'bg-dusk-deep text-white shadow' : 'hover:bg-white/15 text-dusk-ink'
+                className={`whitespace-nowrap rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold transition shrink-0 min-h-[44px] flex items-center justify-center active:scale-95 ${
+                  tab === t ? 'btn-dark text-white shadow-sm' : 'hover:bg-white/25 text-slate-800'
                 }`}
               >
                 {t}
@@ -523,9 +550,45 @@ export default function AnalysisPage({
             ))}
           </div>
 
+          {/* Executive Highlights Card */}
+          <div className="glass p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-2xl bg-white/50 border border-white/70 flex flex-col items-center justify-center shrink-0">
+                <span className="text-[10px] uppercase font-bold text-slate-500 font-mono">Score</span>
+                <span className="text-lg font-extrabold font-mono text-[#1E293B] leading-none">{a.score}</span>
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold text-slate-900">Verdict Direction:</span>
+                  <span className={`chip text-xs px-2.5 py-0.5 font-bold ${
+                    a.finalRecommendation?.verdict === 'Proceed'
+                      ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                      : a.finalRecommendation?.verdict === 'Validate Further'
+                        ? 'bg-blue-100 text-blue-900 border border-blue-300'
+                        : 'bg-amber-100 text-amber-900 border border-amber-300'
+                  }`}>
+                    {a.finalRecommendation?.verdict || 'VALIDATE FIRST'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-0.5 line-clamp-1">
+                  {a.executiveSummary?.biggestConcern ? `Key Risk: ${a.executiveSummary.biggestConcern}` : 'Empirical deterministic evaluation complete.'}
+                </p>
+              </div>
+            </div>
+            {onViewVerdict && (
+              <button
+                onClick={onViewVerdict}
+                className="btn-primary text-xs flex items-center justify-center gap-1.5 py-2.5 px-4 w-full sm:w-auto font-bold shadow-xs shrink-0 min-h-[44px]"
+              >
+                <span>View Overall Verdict</span>
+                <ArrowRight size={14} />
+              </button>
+            )}
+          </div>
+
             {/* Final Overall Verdict Banner */}
             {onViewVerdict && (
-              <Glass className="p-4 bg-gradient-to-r from-dusk-deep/15 via-white/20 to-emerald-500/10 border border-dusk-deep/30 flex flex-wrap items-center justify-between gap-3">
+              <Glass className="p-4 bg-gradient-to-r from-dusk-deep/15 via-white/20 to-emerald-500/10 border border-dusk-deep/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="h-9 w-9 rounded-xl bg-dusk-deep text-white flex items-center justify-center shrink-0">
                     <Compass size={20} />
@@ -541,7 +604,7 @@ export default function AnalysisPage({
                 </div>
                 <button
                   onClick={onViewVerdict}
-                  className="btn-primary text-xs flex items-center gap-1.5 px-4 py-2 shadow-sm"
+                  className="btn-primary text-xs flex items-center justify-center gap-1.5 px-4 py-2.5 shadow-sm min-h-[44px] w-full sm:w-auto font-bold active:scale-98 shrink-0"
                 >
                   View Overall Verdict <ArrowRight size={14} />
                 </button>
@@ -559,7 +622,7 @@ export default function AnalysisPage({
             {tab === 'Executive Report' && (
               <div className="rise space-y-4" key="exec">
                 {/* 1. Executive Summary */}
-                <Glass className="p-6">
+                <Glass className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl">
                   <h3 className="mb-3 font-semibold text-lg flex items-center gap-2">
                     <Target size={18} className="text-dusk-deep" /> Executive Summary
                   </h3>
@@ -582,7 +645,7 @@ export default function AnalysisPage({
                 </Glass>
 
                 {/* 11. Final Recommendation */}
-                <Glass className="p-6">
+                <Glass className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                     <h3 className="font-semibold text-lg">Final Strategic Recommendation</h3>
                     <span
@@ -637,7 +700,7 @@ export default function AnalysisPage({
             {tab === 'Problem & Solution' && (
               <div className="rise space-y-4" key="ps">
                 {/* 2. Problem Analysis */}
-                <Glass className="p-6">
+                <Glass className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl">
                   <h3 className="mb-3 font-semibold text-lg">2. Problem Analysis</h3>
                   <div className="space-y-3 text-sm text-dusk-ink leading-relaxed">
                     <div className="rounded-xl bg-white/10 p-3.5">
@@ -672,7 +735,7 @@ export default function AnalysisPage({
                 </Glass>
 
                 {/* 4. Solution Analysis & MVP Scope */}
-                <Glass className="p-6">
+                <Glass className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl">
                   <h3 className="mb-3 font-semibold text-lg">4. Solution Analysis & Minimum Viable Product</h3>
                   <div className="space-y-3 text-sm text-dusk-ink leading-relaxed">
                     <div className="rounded-xl bg-white/10 p-3.5">
@@ -731,7 +794,7 @@ export default function AnalysisPage({
             {tab === 'Customers & Market' && (
               <div className="rise space-y-4" key="cm">
                 {/* 3. Customer Analysis */}
-                <Glass className="p-6">
+                <Glass className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl">
                   <h3 className="mb-3 font-semibold text-lg">3. Customer Analysis</h3>
                   <div className="space-y-3 text-sm text-dusk-ink leading-relaxed">
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -1106,7 +1169,7 @@ export default function AnalysisPage({
                     </div>
                     <button
                       type="button"
-                      className="btn-primary text-xs flex items-center gap-1.5"
+                      className="btn-primary text-xs flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl min-h-[44px] w-full sm:w-auto font-semibold active:scale-98"
                       onClick={() => setShowInterviewForm(prev => !prev)}
                     >
                       <Plus size={14} /> {showInterviewForm ? 'Close Form' : 'Log Customer Interview'}
@@ -1117,7 +1180,7 @@ export default function AnalysisPage({
                   {showInterviewForm && (
                     <form
                       onSubmit={handleSaveInterview}
-                      className="mb-6 rounded-2xl bg-white/15 p-5 border border-white/20 space-y-4"
+                      className="mb-6 rounded-2xl bg-white/15 p-4 sm:p-5 border border-white/20 space-y-4"
                     >
                       <h5 className="font-semibold text-sm text-dusk-ink">Record New Interview</h5>
                       <div className="grid gap-3 sm:grid-cols-2 text-xs">
@@ -1125,7 +1188,7 @@ export default function AnalysisPage({
                           <label className="block font-medium mb-1">Interview Date</label>
                           <input
                             type="date"
-                            className="input text-xs"
+                            className="input text-base sm:text-xs min-h-[44px]"
                             value={newInterview.date}
                             onChange={e => setNewInterview(p => ({ ...p, date: e.target.value }))}
                             required
@@ -1136,7 +1199,7 @@ export default function AnalysisPage({
                           <input
                             type="text"
                             placeholder="e.g. Owner of 2-location specialty café"
-                            className="input text-xs"
+                            className="input text-base sm:text-xs min-h-[44px]"
                             value={newInterview.intervieweeRole}
                             onChange={e => setNewInterview(p => ({ ...p, intervieweeRole: e.target.value }))}
                             required
@@ -1144,11 +1207,11 @@ export default function AnalysisPage({
                         </div>
                       </div>
 
-                      <div className="grid gap-3 sm:grid-cols-3 text-xs">
+                      <div className="grid gap-3 grid-cols-1 sm:grid-cols-3 text-xs">
                         <div>
                           <label className="block font-medium mb-1">Did they confirm the problem?</label>
                           <select
-                            className="input text-xs"
+                            className="input text-base sm:text-xs min-h-[44px]"
                             value={newInterview.problemConfirmed ? 'yes' : 'no'}
                             onChange={e => setNewInterview(p => ({ ...p, problemConfirmed: e.target.value === 'yes' }))}
                           >
@@ -1159,7 +1222,7 @@ export default function AnalysisPage({
                         <div>
                           <label className="block font-medium mb-1">Problem Occurrence Frequency</label>
                           <select
-                            className="input text-xs"
+                            className="input text-base sm:text-xs min-h-[44px]"
                             value={newInterview.frequency}
                             onChange={e => setNewInterview(p => ({ ...p, frequency: e.target.value as any }))}
                           >
@@ -1173,7 +1236,7 @@ export default function AnalysisPage({
                         <div>
                           <label className="block font-medium mb-1">Would they pay to solve it?</label>
                           <select
-                            className="input text-xs"
+                            className="input text-base sm:text-xs min-h-[44px]"
                             value={newInterview.wouldPay ? 'yes' : 'no'}
                             onChange={e => setNewInterview(p => ({ ...p, wouldPay: e.target.value === 'yes' }))}
                           >
@@ -1183,13 +1246,13 @@ export default function AnalysisPage({
                         </div>
                       </div>
 
-                      <div className="grid gap-3 sm:grid-cols-2 text-xs">
+                      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 text-xs">
                         <div>
                           <label className="block font-medium mb-1">Current Workaround Used</label>
                           <input
                             type="text"
                             placeholder="e.g. Manual Google Sheets + email attachments"
-                            className="input text-xs"
+                            className="input text-base sm:text-xs min-h-[44px]"
                             value={newInterview.currentWorkaround}
                             onChange={e => setNewInterview(p => ({ ...p, currentWorkaround: e.target.value }))}
                           />
@@ -1199,7 +1262,7 @@ export default function AnalysisPage({
                           <input
                             type="text"
                             placeholder="e.g. Would spend $50/month to save 5 hours"
-                            className="input text-xs"
+                            className="input text-base sm:text-xs min-h-[44px]"
                             value={newInterview.estimatedBudget}
                             onChange={e => setNewInterview(p => ({ ...p, estimatedBudget: e.target.value }))}
                           />
@@ -1211,7 +1274,7 @@ export default function AnalysisPage({
                         <input
                           type="text"
                           placeholder='e.g. "We lose 4 hours every Monday reconciling receipts and it drives us crazy."'
-                          className="input text-xs"
+                          className="input text-base sm:text-xs min-h-[44px]"
                           value={newInterview.keyQuotes}
                           onChange={e => setNewInterview(p => ({ ...p, keyQuotes: e.target.value }))}
                         />
@@ -1222,17 +1285,17 @@ export default function AnalysisPage({
                         <textarea
                           rows={2}
                           placeholder="What did you observe about their setup, hesitation, or unexpected workarounds?"
-                          className="input text-xs"
+                          className="input text-base sm:text-xs min-h-[70px]"
                           value={newInterview.notes}
                           onChange={e => setNewInterview(p => ({ ...p, notes: e.target.value }))}
                         />
                       </div>
 
-                      <div className="flex gap-2 justify-end pt-2">
-                        <button type="button" className="btn-ghost text-xs" onClick={() => setShowInterviewForm(false)}>
+                      <div className="flex flex-col-reverse sm:flex-row gap-2 justify-end pt-2">
+                        <button type="button" className="btn-ghost text-xs py-2.5 px-4 min-h-[44px] flex items-center justify-center rounded-xl active:scale-98" onClick={() => setShowInterviewForm(false)}>
                           Cancel
                         </button>
-                        <button type="submit" className="btn-primary text-xs">
+                        <button type="submit" className="btn-primary text-xs py-2.5 px-5 font-bold min-h-[44px] flex items-center justify-center rounded-xl shadow-sm active:scale-98">
                           Save Interview & Update Evaluation
                         </button>
                       </div>

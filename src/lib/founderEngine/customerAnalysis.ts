@@ -82,8 +82,9 @@ export function analyzeCustomer(
   })
 
   // 5 Mom Test Questions (Deterministic, non-leading)
+  const cleanSnippet = understood.cleanProblem.slice(0, 50).trim()
   const momTestQuestions = [
-    `1. "When was the last time you encountered [${understood.cleanProblem.slice(0, 50)}...]? Can you walk me through what happened step-by-step?"`,
+    `1. "When was the last time you encountered ${cleanSnippet ? `this issue (${cleanSnippet})` : 'this specific problem'}? Can you walk me through what happened step-by-step?"`,
     `2. "What are you currently doing today to handle or work around that problem? Which tools or spreadsheets do you use?"`,
     `3. "What is the hardest or most frustrating part about the way you solve it right now?"`,
     `4. "What other solutions or software have you actively evaluated or paid for to fix this in the past 12 months?"`,

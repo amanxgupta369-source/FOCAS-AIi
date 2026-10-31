@@ -1,13 +1,16 @@
 import { useState, useRef } from 'react'
-import type { IdeaForm, Project, Route, EvaluationProgress } from './types'
+import type { IdeaForm, Project, Route, EvaluationProgress, ProjectTimelineEntry } from './types'
 import { useProjects } from './lib/store'
 import { runDeterministicEvaluation as runBoundedEvaluation, DEFAULT_MODEL } from './lib/reasoningEngine'
 import Landing from './pages/Landing'
-import Dashboard, { Shell } from './pages/Dashboard'
+import Dashboard, { Shell, ActivityView } from './pages/Dashboard'
 import Wizard, { EMPTY } from './pages/Wizard'
 import AnalysisPage from './pages/Analysis'
+import ProjectToday from './pages/ProjectToday'
 import OverallVerdictPage from './pages/Verdict'
 import AuthModal from './components/AuthModal'
+import { generateInitialSprint } from './lib/validationSprint'
+import { trackEvent } from './lib/analytics'
 
 export default function App() {
   const {
@@ -71,6 +74,8 @@ export default function App() {
     const existingChat = old?.chatHistory || []
     const existingInterviews = old?.interviews || []
     const existingAssumptions = old?.trackedAssumptions || []
+    const existingSprint = old?.sprint
+    const existingTimeline = old?.timeline || []
 
     if (evaluate) {
       const controller = new AbortController()
@@ -91,9 +96,11 @@ export default function App() {
         trackedAssumptions: existingAssumptions,
         history: updatedHistory,
         chatHistory: existingChat,
+        sprint: existingSprint,
+        timeline: existingTimeline,
       }
       upsert(analyzing)
-      go({ page: 'project', id })
+      go({ page: 'project', id, view: 'today' })
 
       try {
         const { analysis, modelUsed, evaluationType, isQuotaExceeded } = await runBoundedEvaluation(
@@ -104,6 +111,18 @@ export default function App() {
           existingInterviews,
           existingAssumptions
         )
+
+        const initialSprint = existingSprint || generateInitialSprint({ ...analyzing, analysis })
+        const initialTimelineEntry: ProjectTimelineEntry = {
+          id: crypto.randomUUID(),
+          timestamp: new Date().toISOString(),
+          type: 'evaluation',
+          title: 'Deterministic Evaluation Completed',
+          description: `Initial readiness calculated at ${analysis.score}/100. Step 1 of validation sprint completed.`,
+          scoreDelta: { before: 0, after: analysis.score },
+        }
+
+        trackEvent('idea_evaluation_completed', id, { readinessScore: analysis.score })
 
         upsert({
           ...analyzing,
@@ -117,6 +136,8 @@ export default function App() {
           history: updatedHistory,
           chatHistory: existingChat,
           interviews: existingInterviews,
+          sprint: initialSprint,
+          timeline: existingTimeline.length > 0 ? existingTimeline : [initialTimelineEntry],
           trackedAssumptions: existingAssumptions.length > 0
             ? existingAssumptions
             : (analysis.assumptionAnalysis || []).map(a => ({
@@ -128,6 +149,7 @@ export default function App() {
                 lastUpdated: new Date().toISOString(),
               })),
         })
+        go({ page: 'project', id, view: 'today' })
       } catch (err: any) {
         console.error('Evaluation failed:', err)
         const isCancelled =
@@ -136,15 +158,17 @@ export default function App() {
         upsert({
           ...analyzing,
           status: old?.status || 'Evaluating',
-          analysis: old?.analysis, // preserve previous report on failure
+          analysis: old?.analysis,
           history: old?.history,
           chatHistory: existingChat,
           interviews: existingInterviews,
           trackedAssumptions: existingAssumptions,
+          sprint: existingSprint,
+          timeline: existingTimeline,
           error: isCancelled
             ? 'Evaluation was cancelled.'
             : err?.message ||
-              'Could not complete AI evaluation. Switched to FOCAS Basic Evaluation.',
+              'Could not complete evaluation. Switched to FOCAS Basic Evaluation.',
           updated: new Date().toISOString(),
         })
       } finally {
@@ -165,9 +189,11 @@ export default function App() {
         chatHistory: existingChat,
         interviews: existingInterviews,
         trackedAssumptions: existingAssumptions,
+        sprint: existingSprint,
+        timeline: existingTimeline,
       }
       upsert(p)
-      go({ page: 'project', id: p.id })
+      go({ page: 'project', id: p.id, view: 'today' })
     }
   }
 
@@ -222,7 +248,7 @@ export default function App() {
         user={user}
         onOpenAuth={() => setAuthOpen(true)}
       >
-        {route.page === 'dashboard' && (
+        {(route.page === 'dashboard' || route.page === 'projects') && (
           <Dashboard
             projects={projects}
             go={go}
@@ -231,6 +257,10 @@ export default function App() {
             onDelete={remove}
             storageError={storageError}
           />
+        )}
+
+        {route.page === 'activity' && (
+          <ActivityView projects={projects} go={go} />
         )}
 
         {route.page === 'new' && (
@@ -245,34 +275,56 @@ export default function App() {
 
         {route.page === 'project' &&
           (current ? (
-            <AnalysisPage
-              project={current}
-              progress={progress}
-              onChange={upsert}
-              onEdit={() => go({ page: 'new', editId: current.id })}
-              onReevaluate={() => save(current.form, true, current.id)}
-              onCancelAnalysis={() => cancelAnalysis(current.id)}
-              onDelete={() => {
-                if (
-                  window.confirm(
-                    `Are you sure you want to delete “${current.form.name}”? All saved evaluation reports, history, and chat will be deleted.`
-                  )
-                ) {
-                  remove(current.id)
-                  go({ page: 'dashboard' })
-                }
-              }}
-              onViewVerdict={() => go({ page: 'verdict', id: current.id })}
-            />
+            route.view === 'report' ? (
+              <AnalysisPage
+                project={current}
+                progress={progress}
+                onChange={upsert}
+                onEdit={() => go({ page: 'new', editId: current.id })}
+                onReevaluate={() => save(current.form, true, current.id)}
+                onCancelAnalysis={() => cancelAnalysis(current.id)}
+                onDelete={() => {
+                  if (
+                    window.confirm(
+                      `Are you sure you want to delete “${current.form.name}”? All saved evaluation reports, history, and interviews will be deleted.`
+                    )
+                  ) {
+                    remove(current.id)
+                    go({ page: 'dashboard' })
+                  }
+                }}
+                onViewVerdict={() => go({ page: 'verdict', id: current.id })}
+                onBackToToday={() => go({ page: 'project', id: current.id, view: 'today' })}
+              />
+            ) : (
+              <ProjectToday
+                project={current}
+                onChange={upsert}
+                onViewReport={() => go({ page: 'project', id: current.id, view: 'report' })}
+                onReevaluate={() => save(current.form, true, current.id)}
+                onEdit={() => go({ page: 'new', editId: current.id })}
+                onDelete={() => {
+                  if (
+                    window.confirm(
+                      `Are you sure you want to delete “${current.form.name}”? All saved evaluation reports, history, and interviews will be deleted.`
+                    )
+                  ) {
+                    remove(current.id)
+                    go({ page: 'dashboard' })
+                  }
+                }}
+                onViewVerdict={() => go({ page: 'verdict', id: current.id })}
+              />
+            )
           ) : (
-            <p className="glass p-6">Project not found.</p>
+            <p className="glass p-6 text-slate-800">Project not found.</p>
           ))}
 
         {route.page === 'verdict' &&
           (current ? (
             <OverallVerdictPage project={current} go={go} />
           ) : (
-            <p className="glass p-6">Project not found.</p>
+            <p className="glass p-6 text-slate-800">Project not found.</p>
           ))}
       </Shell>
 
